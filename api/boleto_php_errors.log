@@ -1,0 +1,229 @@
+[24-Feb-2026 22:41:26 UTC] Erro no processar_boleto.php (PHP Parser): Object list not found. Possible secured file. - Arquivo: ilovepdf_merged.pdf
+[27-Feb-2026 12:30:07 UTC] Erro no processar_boleto.php (PHP Parser): Object list not found. Possible secured file. - Arquivo: ilovepdf_merged.pdf
+[27-Feb-2026 13:17:53 UTC] Erro no processar_boleto.php (PHP Parser): Object list not found. Possible secured file. - Arquivo: ilovepdf_merged (2).pdf
+[27-Feb-2026 14:43:40 UTC] Erro no processar_boleto.php (PHP Parser): Object list not found. Possible secured file. - Arquivo: ilovepdf_merged (4).pdf
+[02-Mar-2026 16:51:27 UTC] Erro no processar_boleto.php (PHP Parser): Object list not found. Possible secured file. - Arquivo: ilovepdf_merged.pdf
+[02-Mar-2026 18:23:18 UTC] Erro no processar_boleto.php (PHP Parser): Object list not found. Possible secured file. - Arquivo: BOLETO ERIKANA 02.2026.pdf
+[02-Mar-2026 18:23:56 UTC] Erro no processar_boleto.php (PHP Parser): Object list not found. Possible secured file. - Arquivo: ilovepdf_merged.pdf
+[02-Mar-2026 18:49:20 UTC] Erro no processar_boleto.php (PHP Parser): Object list not found. Possible secured file. - Arquivo: 145695 BK  FACILITA_merged.pdf
+[02-Mar-2026 19:00:36 UTC] PHP Warning:  Undefined array key 1 in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 119
+[02-Mar-2026 19:00:36 UTC] PHP Warning:  foreach() argument must be of type array|object, null given in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 119
+[02-Mar-2026 19:05:04 UTC] Erro: Object list not found. Possible secured file.
+[02-Mar-2026 19:05:10 UTC] Erro: Object list not found. Possible secured file.
+[02-Mar-2026 19:07:59 UTC] Erro: Object list not found. Possible secured file.
+[02-Mar-2026 19:08:12 UTC] PHP Warning:  Undefined array key 1 in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 119
+[02-Mar-2026 19:08:12 UTC] PHP Warning:  foreach() argument must be of type array|object, null given in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 119
+[02-Mar-2026 19:14:45 UTC] PHP Warning:  Undefined array key 1 in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 191
+[02-Mar-2026 19:14:45 UTC] PHP Warning:  foreach() argument must be of type array|object, null given in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 191
+[02-Mar-2026 19:15:18 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[02-Mar-2026 19:15:18 UTC] PHP Warning:  Undefined array key 1 in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 191
+[02-Mar-2026 19:15:18 UTC] PHP Warning:  foreach() argument must be of type array|object, null given in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 191
+[02-Mar-2026 19:15:25 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[02-Mar-2026 19:15:25 UTC] PHP Warning:  Undefined array key 1 in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 191
+[02-Mar-2026 19:15:25 UTC] PHP Warning:  foreach() argument must be of type array|object, null given in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 191
+[02-Mar-2026 19:15:35 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[02-Mar-2026 19:15:35 UTC] PHP Warning:  Undefined array key 1 in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 191
+[02-Mar-2026 19:15:35 UTC] PHP Warning:  foreach() argument must be of type array|object, null given in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 191
+[02-Mar-2026 19:15:43 UTC] PHP Warning:  Undefined array key 1 in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 191
+[02-Mar-2026 19:15:43 UTC] PHP Warning:  foreach() argument must be of type array|object, null given in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 191
+[02-Mar-2026 19:16:16 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[02-Mar-2026 19:16:16 UTC] PHP Warning:  Undefined array key 1 in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 191
+[02-Mar-2026 19:16:16 UTC] PHP Warning:  foreach() argument must be of type array|object, null given in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 191
+[02-Mar-2026 19:19:06 UTC] Smalot falhou: Object list not found. Possible secured file.
+[02-Mar-2026 19:19:40 UTC] Erro: Object list not found. Possible secured file.
+[02-Mar-2026 19:19:51 UTC] PHP Warning:  Undefined array key 1 in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 119
+[02-Mar-2026 19:19:51 UTC] PHP Warning:  foreach() argument must be of type array|object, null given in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 119
+[02-Mar-2026 19:20:13 UTC] PHP Warning:  Undefined array key 1 in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 119
+[02-Mar-2026 19:20:13 UTC] PHP Warning:  foreach() argument must be of type array|object, null given in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 119
+[02-Mar-2026 19:22:16 UTC] PHP Warning:  Undefined array key 1 in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 191
+[02-Mar-2026 19:22:16 UTC] PHP Warning:  foreach() argument must be of type array|object, null given in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 191
+[02-Mar-2026 19:22:29 UTC] PHP Warning:  Undefined array key 1 in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 191
+[02-Mar-2026 19:22:29 UTC] PHP Warning:  foreach() argument must be of type array|object, null given in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 191
+[02-Mar-2026 19:23:36 UTC] PHP Warning:  Undefined array key 1 in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 191
+[02-Mar-2026 19:23:36 UTC] PHP Warning:  foreach() argument must be of type array|object, null given in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 191
+[02-Mar-2026 19:30:36 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[02-Mar-2026 19:30:44 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[02-Mar-2026 19:30:57 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[02-Mar-2026 19:32:14 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[02-Mar-2026 19:37:15 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[02-Mar-2026 19:44:05 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[02-Mar-2026 20:19:24 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[03-Mar-2026 11:36:58 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[03-Mar-2026 11:40:32 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[03-Mar-2026 19:34:26 UTC] PHP Warning:  preg_match(): Unknown modifier ')' in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 192
+[03-Mar-2026 22:22:48 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[03-Mar-2026 22:22:48 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: ilovepdf_merged (6).pdf
+[03-Mar-2026 22:22:55 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[03-Mar-2026 22:22:55 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: VONDER 2_merged.pdf
+[03-Mar-2026 22:23:04 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: boletos_AYLA SEGUROS.pdf
+[03-Mar-2026 22:23:53 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[03-Mar-2026 22:23:53 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: VONDER 2_merged.pdf
+[03-Mar-2026 22:24:03 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: boletos_AYLA SEGUROS.pdf
+[03-Mar-2026 22:36:21 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: boletos_AYLA SEGUROS.pdf
+[03-Mar-2026 22:37:34 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: Whatsapp Scan 1 de dezembro de 2025 at 10.45.08.pdf
+[04-Mar-2026 13:05:31 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: ML ROÇADEIRA IF APODI.pdf
+[04-Mar-2026 20:18:33 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[04-Mar-2026 20:18:33 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: 23987413_merged.pdf
+[05-Mar-2026 12:19:34 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 12:19:34 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: BOLETO COELBA 03.2026.pdf
+[05-Mar-2026 12:19:58 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 12:19:58 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: 23987413_merged.pdf
+[05-Mar-2026 13:20:44 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 13:20:44 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: BOLETO MERCADO PAGO (1).pdf
+[05-Mar-2026 13:53:26 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 13:53:26 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: ilovepdf_merged (11).pdf
+[05-Mar-2026 17:03:28 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:03:28 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: ilovepdf_merged (6).pdf
+[05-Mar-2026 17:06:15 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:06:15 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: 145695 BK  FACILITA_merged (1).pdf
+[05-Mar-2026 17:06:20 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: BOLETO MEDIATORIE 03.2026.pdf
+[05-Mar-2026 17:08:10 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:08:10 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: ilovepdf_merged (4).pdf
+[05-Mar-2026 17:08:15 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:08:15 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: ilovepdf_merged (6) (1).pdf
+[05-Mar-2026 17:08:21 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:08:21 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: VONDER 2_merged (1).pdf
+[05-Mar-2026 17:08:26 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:08:26 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: BOLETO COELBA 03.2026.pdf
+[05-Mar-2026 17:08:33 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: BOLETO MEDIATORIE 03.2026.pdf
+[05-Mar-2026 17:09:45 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:09:45 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: ilovepdf_merged (1).pdf
+[05-Mar-2026 17:13:02 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:13:02 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: BOLETO MEELITE 03.2026.pdf
+[05-Mar-2026 17:13:08 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:13:08 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: ilovepdf_merged (4).pdf
+[05-Mar-2026 17:44:21 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:46:50 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:46:50 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: BOLETO MEELITE 03.2026.pdf
+[05-Mar-2026 17:46:56 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:46:56 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: BOLETO COELBA 03.2026.pdf
+[05-Mar-2026 17:47:38 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:47:51 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: boletos_AYLA SEGUROS.pdf
+[05-Mar-2026 17:48:27 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: Whatsapp Scan 1 de dezembro de 2025 at 10.45.08.pdf
+[05-Mar-2026 17:49:15 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:50:08 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:50:08 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: BOLETO MEELITE 03.2026.pdf
+[05-Mar-2026 17:57:04 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:57:19 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:57:19 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: BOLETO MEELITE 03.2026.pdf
+[05-Mar-2026 17:57:25 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:57:31 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:57:36 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:57:37 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: VONDER 2_merged (1).pdf
+[05-Mar-2026 17:57:41 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:57:41 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: BOLETO COELBA 03.2026.pdf
+[05-Mar-2026 17:57:48 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 17:57:48 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: 145695 BK  FACILITA_merged (2).pdf
+[05-Mar-2026 18:05:06 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 18:05:19 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 18:05:19 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: BOLETO MEELITE 03.2026.pdf
+[05-Mar-2026 18:05:27 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 18:05:33 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 18:05:33 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: VONDER 2_merged (1).pdf
+[05-Mar-2026 18:05:39 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 18:05:39 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: BOLETO COELBA 03.2026.pdf
+[05-Mar-2026 18:05:45 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 18:05:45 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: 145695 BK  FACILITA_merged (2).pdf
+[05-Mar-2026 18:06:26 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 18:06:26 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: BOLETO MEELITE 03.2026.pdf
+[05-Mar-2026 18:06:58 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[05-Mar-2026 18:06:58 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: BOLETO MEELITE 03.2026.pdf
+[05-Mar-2026 18:41:10 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[06-Mar-2026 11:44:18 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[06-Mar-2026 14:21:36 UTC] Método Smalot falhou: Secured pdf file are currently not supported.
+[06-Mar-2026 14:23:36 UTC] Método Smalot falhou: Secured pdf file are currently not supported.
+[06-Mar-2026 14:23:36 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: BOLETO MEDIATORIE 03.pdf
+[06-Mar-2026 17:57:54 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[06-Mar-2026 18:00:50 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[06-Mar-2026 19:08:21 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: Whatsapp Scan 1 de dezembro de 2025 at 10.45.08 (1).pdf
+[06-Mar-2026 19:09:42 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[06-Mar-2026 19:35:34 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[06-Mar-2026 19:35:34 UTC] Erro: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: ilovepdf_merged (2).pdf
+[06-Mar-2026 19:44:45 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[06-Mar-2026 19:44:45 UTC] Erro: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: ilovepdf_merged (2).pdf
+[06-Mar-2026 20:06:43 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[06-Mar-2026 20:06:43 UTC] Erro: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: ilovepdf_merged (2).pdf
+[06-Mar-2026 20:22:05 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[06-Mar-2026 20:22:05 UTC] Erro: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: ilovepdf_merged (2).pdf
+[06-Mar-2026 20:31:28 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[06-Mar-2026 20:31:28 UTC] Erro: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: ilovepdf_merged (12).pdf
+[06-Mar-2026 20:31:41 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[06-Mar-2026 20:31:41 UTC] Erro: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: ilovepdf_merged (2).pdf
+[06-Mar-2026 20:36:53 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[06-Mar-2026 20:36:53 UTC] Erro: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: ilovepdf_merged (2).pdf
+[06-Mar-2026 20:43:36 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[06-Mar-2026 20:43:36 UTC] Erro: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00) - Arquivo: ilovepdf_merged (2).pdf
+[09-Mar-2026 12:26:31 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: BOLETO SILICATO DE POTASSIO ROMEIRÃO.pdf
+[11-Mar-2026 15:02:59 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[11-Mar-2026 18:47:27 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: Whatsapp Scan 11 de março de 2026 at 15.45.38.pdf
+[12-Mar-2026 13:22:00 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: Whatsapp Scan 12 de março de 2026 at 10.15.57.pdf
+[12-Mar-2026 15:59:07 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[12-Mar-2026 15:59:07 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: Imagem (895).pdf
+[13-Mar-2026 13:27:27 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[13-Mar-2026 13:38:26 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[13-Mar-2026 14:26:41 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[13-Mar-2026 14:42:56 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[13-Mar-2026 14:47:03 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[13-Mar-2026 14:52:31 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[13-Mar-2026 15:00:44 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[13-Mar-2026 15:24:38 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[13-Mar-2026 15:35:15 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[13-Mar-2026 15:59:51 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: boletos_AYLA SEGUROS.pdf
+[13-Mar-2026 16:07:41 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[13-Mar-2026 16:38:53 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[13-Mar-2026 16:45:13 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[16-Mar-2026 12:09:54 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: document_37692139000004000000001000105671000011250756 (1).pdf
+[16-Mar-2026 18:06:23 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[16-Mar-2026 19:05:52 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[16-Mar-2026 20:16:56 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: Whatsapp Scan 16 de março de 2026 at 17.14.41.pdf
+[17-Mar-2026 01:43:17 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[17-Mar-2026 01:44:17 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[17-Mar-2026 11:18:10 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[17-Mar-2026 16:42:33 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[17-Mar-2026 16:46:17 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[17-Mar-2026 16:51:11 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[17-Mar-2026 17:06:32 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[17-Mar-2026 17:44:25 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[17-Mar-2026 17:44:25 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: BOLETO COELBA 03.2026.pdf
+[17-Mar-2026 17:48:49 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[17-Mar-2026 17:52:17 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[17-Mar-2026 17:52:17 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: BOLETO MEELITE 03.2026.pdf
+[17-Mar-2026 17:54:15 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[17-Mar-2026 17:54:15 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: VONDER 2_merged.pdf
+[17-Mar-2026 17:55:15 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: boletos_AYLA SEGUROS.pdf
+[17-Mar-2026 17:56:38 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[17-Mar-2026 17:56:39 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: VONDER 2_merged (1).pdf
+[17-Mar-2026 18:07:44 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[17-Mar-2026 18:07:44 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: VONDER 2_merged (1).pdf
+[17-Mar-2026 18:19:46 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[17-Mar-2026 18:19:46 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: BOLETO MEELITE 03.2026.pdf
+[17-Mar-2026 18:23:59 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[17-Mar-2026 18:28:31 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: Whatsapp Scan 17 de março de 2026 at 15.27.41.pdf
+[17-Mar-2026 18:32:16 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[17-Mar-2026 18:32:16 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: ilovepdf_merged (16).pdf
+[17-Mar-2026 18:34:39 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[17-Mar-2026 18:34:39 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: ilovepdf_merged (16).pdf
+[17-Mar-2026 18:37:26 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[17-Mar-2026 18:37:26 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: ilovepdf_merged (16).pdf
+[17-Mar-2026 18:41:07 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[18-Mar-2026 11:10:54 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[18-Mar-2026 11:39:01 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[18-Mar-2026 11:39:01 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: BOLETO EMBASA MES 4.pdf
+[18-Mar-2026 13:02:10 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[18-Mar-2026 13:41:17 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[19-Mar-2026 13:59:32 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[19-Mar-2026 14:55:14 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[19-Mar-2026 14:57:19 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[19-Mar-2026 14:57:19 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: Scanner_20260319 (2) (2).pdf
+[20-Mar-2026 12:05:07 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[20-Mar-2026 17:11:57 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[20-Mar-2026 18:54:41 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: BOLETO UNIFORMES MER .PAGO.pdf
+[23-Mar-2026 11:42:33 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: Cópia de Controle Preditivo de Mouse Virtual Usando Movimentos da Cabeça (4).pdf
+[23-Mar-2026 11:58:25 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[23-Mar-2026 11:58:25 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: nacional.pdf
+[23-Mar-2026 12:00:16 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[23-Mar-2026 12:00:16 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: Imagem (987).pdf
+[23-Mar-2026 12:52:48 UTC] Método Smalot falhou: Object list not found. Possible secured file.
+[23-Mar-2026 12:58:57 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: ilovepdf_merged (19).pdf
+[24-Mar-2026 11:25:46 UTC] Método Smalot falhou: Secured pdf file are currently not supported.
+[24-Mar-2026 11:25:46 UTC] Erro ao processar boleto: Nenhum valor válido encontrado no boleto (mínimo R$ 5,00). - Arquivo: BOLETO MEDIATORIE 04.2026.pdf

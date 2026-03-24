@@ -1,0 +1,1 @@
+2026-03-11 16:02:02 [ERROR] Erro ao replicar os registros: SQLSTATE[HY093]: Invalid parameter number: mixed named and positional parameters (Origem: 2026-03, Destino: 2026-04)

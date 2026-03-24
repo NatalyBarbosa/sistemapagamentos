@@ -1,0 +1,4 @@
+[24-Feb-2026 20:09:27 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function shell_exec() in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php:39
+Stack trace:
+#0 {main}
+  thrown in /home/u787670524/domains/ordemdepagamento.com/public_html/sistema/api/processar_boleto.php on line 39

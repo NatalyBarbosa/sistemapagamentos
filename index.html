@@ -1,0 +1,1984 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestão de Pagamentos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Sistema de Gestão de Pagamentos</h1>
+            <p>Controle completo de ordens de pagamento e salários</p>
+        </div>
+
+        <!-- Seção de Login - REMOVIDO style="display: none;" -->
+        <div id="loginSection" class="login-section">
+            <div class="login-form">
+                <h2>Selecione seu Perfil de Acesso</h2>
+                
+                <!-- Ícones de Login -->
+                <div class="login-icons">
+                    <button class="login-icon" data-role="Geral">
+                        <div class="login-icon-symbol">👑</div>
+                        <div>Geral</div>
+                    </button>
+                    <button class="login-icon" data-role="Diretoria">
+                        <div class="login-icon-symbol">🏢</div>
+                        <div>Diretoria</div>
+                    </button>
+                    <button class="login-icon" data-role="Financeiro">
+                        <div class="login-icon-symbol">💰</div>
+                        <div>Financeiro</div>
+                    </button>
+                    <button class="login-icon" data-role="Pagador">
+                        <div class="login-icon-symbol">💳</div>
+                        <div>Pagador</div>
+                    </button>
+                    <button class="login-icon" data-role="Comum">
+                        <div class="login-icon-symbol">👤</div>
+                        <div>Comum</div>
+                    </button>
+                    <button class="login-icon" data-role="RH">
+                        <div class="login-icon-symbol">👥</div>
+                        <div>RH</div>
+                    </button>
+                </div>
+
+                <!-- Seção de Senha - MANTIDO style="display: none;" -->
+                <div id="passwordSection" class="password-section" style="display: none;">
+                    <div class="form-group">
+                        <label for="password">Senha para <span id="selectedRole">Perfil</span>:</label>
+                        <input type="password" id="password" placeholder="Digite a senha">
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn" id="loginBtn">Entrar</button>
+                        <button class="btn btn-secondary" id="backBtn">Voltar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+                <!-- Modal para pagamento de parcela de boleto -->
+    <div id="boletoPaymentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeBoletoPaymentModal()">&times;</span>
+            <h2>Registrar Pagamento de Parcela de Boleto</h2>
+            <div id="boletoPaymentForm">
+                <p>Boleto: <strong id="modalBoletoVendor"></strong> - Valor Total: <strong id="modalBoletoValue"></strong></p>
+                <h3>Parcelas Pendentes:</h3>
+                <div id="boletoParcelsToPayList">
+                    <!-- Parcelas pendentes serão listadas aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar boleto -->
+    <div id="editBoletoModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditBoletoModal()">&times;</span>
+            <h2>Editar Boleto</h2>
+            <div id="editBoletoForm">
+                <!-- Formulário de edição será carregado aqui via JS -->
+            </div>
+        </div>
+    </div>
+
+        <!-- Conteúdo Principal - MANTIDO style="display: none;" -->
+        <div id="mainContent" class="main-content" style="display: none;">
+            <!-- Informações do Usuário -->
+            <div class="user-info">
+                <div>
+                    <strong>Perfil:</strong> <span id="currentUserRole"></span>
+                </div>
+                <button class="btn btn-danger" id="logoutBtn">Sair</button>
+            </div>
+
+            <!-- Contadores Principais -->
+            <div class="counters">
+                <div class="counter-card">
+                    <h3>Ordens Pendentes</h3>
+                    <p id="totalPendingOrdersCount">0</p>
+                    <small style="font-size: 0.8em; line-height: 1.2em;">
+                        Diretoria: <span id="pendingDiretoriaCount">0</span><br>
+                        Financeiro: <span id="pendingFinanceiroCount">0</span><br>
+                        Pendente Pagamento: <span id="pendingAguardandoPagamentoCount">0</span>
+                    </small>
+                </div>
+                <div class="counter-card">
+                    <h3>Valor Total Pendente</h3>
+                    <p id="totalPendingOrdersValue">R$ 0,00</p>
+                    <small style="font-size: 0.8em; line-height: 1.2em;">
+                        Diretoria: <span id="pendingDiretoriaValue">R$ 0,00</span><br>
+                        Financeiro: <span id="pendingFinanceiroValue">R$ 0,00</span><br>
+                        Pendente Pagamento: <span id="pendingAguardandoPagamentoValue">R$ 0,00</span>
+                    </small>
+                </div>
+                <div class="counter-card">
+                    <h3>
+                        <input type="text" id="cashValue" step="0.01" placeholder="0,00" 
+                               style="border: none; background: transparent; text-align: center; font-size: 1.5em; font-weight: bold; width: 100%; color: inherit;"
+                        readonly>
+                    </h3>
+                    <p>Valor de Caixa</p>
+                </div>
+                <div class="counter-card">
+                    <h3 id="depositValue">R$ 0,00</h3>
+                    <p>Valor Total a ser Depositado</p>
+                </div>
+            </div>
+
+            <!-- Contadores Detalhados -->
+            <div class="detailed-counters">
+                <div class="detailed-card">
+                    <h4>💳 Resumo por Tipo de Pagamento</h4>
+                    <div class="detail-item">
+                        <span class="detail-label">PIX Pendentes:</span>
+                        <span class="detail-value" id="totalPixPending">0 (R$ 0,00)</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Boleto Pendentes:</span>
+                        <span class="detail-value" id="totalBoletoPending">0 (R$ 0,00)</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Outros Pendentes:</span>
+                        <span class="detail-value" id="totalOthersPending">0 (R$ 0,00)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Abas -->
+            <div class="tabs" id="mainTabs">
+                <button class="tab-button active" onclick="showTab('orders', event)">Ordens de Pagamento</button>
+                <button class="tab-button" onclick="showTab('add', event)">Cadastrar Ordem</button>
+                <!-- NOVO BOTÃO DA ABA 'DADOS DE ENTRADA' -->
+                <button class="tab-button" onclick="showTab('entryData', event)">Dados de Entrada</button>
+                <button class="tab-button" onclick="showTab('diretoria', event)">Diretoria</button>
+                <button class="tab-button" onclick="showTab('financeiro', event)">Financeiro</button>
+                <button class="tab-button" onclick="showTab('pending', event)">Pendentes Pagamento</button>
+                <button class="tab-button" onclick="showTab('boletos', event)">Boletos Pendentes</button>
+                <button class="tab-button" onclick="showTab('paid', event)">Ordens Pagas</button>
+                <button class="tab-button" onclick="showTab('reports', event)">Dados de Saída</button>
+                <button class="tab-button" onclick="showTab('salaries', event)">Salários/Auxílios</button>
+                <button class="tab-button" onclick="showTab('reports2', event)">Dados de Saída 2</button>
+                <button class="tab-button" onclick="showTab('deposits', event)">Histórico de Depósito</button>
+            </div>
+
+<div id="ordersTab" class="tab-content active">
+    <h2>Ordens de Pagamento</h2> <!-- <--- ADICIONE ESTA LINHA AQUI! -->
+    
+    <!-- Container centralizado para todos os botões de controle (FILTROS, MOSTRAR TODAS, PAGINAÇÃO) -->
+    <div class="controls-container" style="display: flex; justify-content: center; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap;">
+        
+        <!-- Botão Filtros (Mantenha este) -->
+        <button id="toggleFiltersBtn" class="btn btn-primary" onclick="toggleAdvancedFilters()" style="display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-filter"></i> Filtros
+        </button>
+        
+        <!-- NOVO BOTÃO: Visualização (Alternar entre Mostrar Todas / Voltar para Paginação) para Ordens GERAIS -->
+        <button id="toggleOrdersShowAllItemsBtn" class="btn btn-info" onclick="toggleShowAllOrders()" style="display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-list-alt"></i> Mostrar todas as ordens
+        </button>
+
+        <!-- Controles de Paginação (Mantenha este) -->
+        <div id="paginationControls" class="pagination-controls" style="display: flex; align-items: center; gap: 10px;">
+            <button id="prevPageBtn" class="btn btn-sm btn-outline-primary" onclick="prevPage()">Página Anterior</button>
+            <span id="pageInfo" style="font-weight: bold; white-space: nowrap;">Página 1 de 1</span>
+            <button id="nextPageBtn" class="btn btn-sm btn-outline-primary" onclick="nextPage()">Próxima Página</button>
+        </div>
+    </div>
+    
+
+    <!-- Filtros Avançados e Ordenação (INICIALMENTE OCULTOS) -->
+    <div id="advancedFiltersContainer" class="filters-container" style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; display: none;">
+        <h3 style="margin-top: 0; color: #333;">🔍 Filtros e Ordenação Avançados</h3>
+        
+        <!-- Primeira linha de filtros -->
+        <div class="filters-row">
+            <div class="form-group">
+                <label for="filterStatus">Status:</label>
+                <select id="filterStatus" onchange="debouncedApplyAdvancedFilters()" multiple size="4">
+                    <option value="Pendente">Pendente</option>
+                    <option value="Aguardando Financeiro">Aguardando Financeiro</option>
+                    <option value="Aguardando Pagamento">Aguardando Pagamento</option>
+                    <option value="Paga">Paga</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="filterPriority">Prioridade:</label>
+                <select id="filterPriority" onchange="debouncedApplyAdvancedFilters()">
+                    <option value="">Todas</option>
+                    <option value="Normal">Normal</option>
+                    <option value="Urgencia">Urgência</option>
+                    <option value="Emergencia">Emergência</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="filterPaymentType">Tipo de Pagamento:</label>
+                <select id="filterPaymentType" onchange="debouncedApplyAdvancedFilters()">
+                    <option value="">Todos</option>
+                    <option value="PIX">PIX</option>
+                    <option value="Boleto">Boleto</option>
+                    <option value="Outros">Outros</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="filterDirection">Direcionamento:</label>
+                <select id="filterDirection" onchange="debouncedApplyAdvancedFilters()">
+                    <option value="">Todos</option>
+                    <option value="Marina">Marina</option>
+                    <option value="Lucas">Lucas</option>
+                    <option value="Gabriel">Gabriel</option>
+                    <option value="Lotérica">Lotérica</option>
+                    <option value="Tiago">Tiago</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Segunda linha de filtros -->
+        <div class="filters-row">
+            <div class="form-group">
+                <label for="filterSolicitant">Solicitante:</label>
+                <select id="filterSolicitant" onchange="debouncedApplyAdvancedFilters()">
+                    <option value="">Todos</option>
+                    <option value="Djael Jr">Djael Jr</option>
+                    <option value="Rafael Sagrilo">Rafael Sagrilo</option>
+                    <option value="Lucas Silva">Lucas Silva</option>
+                    <option value="Verônica Barbosa">Verônica Barbosa</option>
+                    <option value="Rafael Sayd">Rafael Sayd</option>
+                    <option value="Maurício Sena">Maurício Sena</option>
+                    <option value="Outro">Outro</option>
+                </select>
+            </div>
+            <!-- NOVO CAMPO: FILTRO DE EMPRESA -->
+            <div class="form-group">
+                <label for="filterCompany">Empresa:</label>
+                <select id="filterCompany" onchange="debouncedApplyAdvancedFilters()">
+                    <option value="">Todas as Empresas</option>
+                    <!-- Opções serão preenchidas via JS -->
+                </select>
+            </div>
+            <!-- FIM NOVO CAMPO -->
+            <div class="form-group">
+                <label for="filterProcess">Processo:</label>
+                <input type="text" id="filterProcess" placeholder="Filtrar por processo..." oninput="debouncedApplyAdvancedFilters()" list="processesList">
+            </div>
+            <div class="form-group">
+                <label for="searchTerm">Buscar Favorecido:</label>
+                <input type="text" id="searchTerm" placeholder="Nome do favorecido..." oninput="debouncedApplyAdvancedFilters()" list="favoredNamesDatalist">
+            </div>
+            <div class="form-group">
+                <label for="filterValueMin">Valor Mínimo:</label>
+                <input type="number" id="filterValueMin" step="0.01" placeholder="0,00" oninput="debouncedApplyAdvancedFilters()">
+            </div>
+        </div>
+
+        <!-- Terceira linha: Datas de Geração, Previsão e Ordenação -->
+        <div class="filters-row">
+            <div class="form-group">
+                <label for="filterDateStart">Data Geração Inicial:</label>
+                <input type="date" id="filterDateStart" onchange="debouncedApplyAdvancedFilters()">
+            </div>
+            <div class="form-group">
+                <label for="filterDateEnd">Data Geração Final:</label>
+                <input type="date" id="filterDateEnd" onchange="debouncedApplyAdvancedFilters()">
+            </div>
+            <div class="form-group">
+                <label for="filterPaymentForecastStartDate">Data Previsão Inicial:</label>
+                <input type="date" id="filterPaymentForecastStartDate" onchange="debouncedApplyAdvancedFilters()">
+            </div>
+            <div class="form-group">
+                <label for="filterPaymentForecastEndDate">Data Previsão Final:</label>
+                <input type="date" id="filterPaymentForecastEndDate" onchange="debouncedApplyAdvancedFilters()">
+            </div>
+        </div>
+        <!-- Nova linha para Valor Máximo e Ordenação para manter o layout organizado -->
+        <div class="filters-row">
+            <div class="form-group">
+                <label for="filterValueMax">Valor Máximo:</label>
+                <input type="number" id="filterValueMax" step="0.01" placeholder="999999,99" oninput="debouncedApplyAdvancedFilters()">
+            </div>
+            <div class="form-group">
+                <label for="sortBy">Ordenar por:</label>
+                <select id="sortBy" onchange="debouncedApplyAdvancedFilters()">
+                    <option value="priority_date">Prioridade + Data</option>
+                    <option value="paymentForecast">Data de Previsão</option> <!-- Alterado para clareza -->
+                    <option value="generationDate">Data de Geração</option>
+                    <option value="paymentValue">Valor (Maior)</option>
+                    <option value="paymentValue_asc">Valor (Menor)</option>
+                    <option value="status">Status</option>
+                    <option value="favoredName">Favorecido A-Z</option>
+                    <option value="process">Processo A-Z</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Botões de ação -->
+        <div class="filters-row" style="margin-top: 15px;">
+            <div class="form-group">
+                <button class="btn btn-primary" onclick="debouncedApplyAdvancedFilters()">🔍 Aplicar Filtros</button>
+            </div>
+            <div class="form-group">
+                <button class="btn btn-secondary" onclick="clearAdvancedFilters(); debouncedApplyAdvancedFilters()">🗑️ LimparFiltros</button>
+            </div>
+            <div class="form-group">
+                <button class="btn btn-info" onclick="saveFilterPreset()">💾 Salvar Filtro</button>
+            </div>
+            <div class="form-group">
+                <select id="filterPresets" onchange="loadFilterPreset()">
+                    <option value="">📂 Filtros Salvos</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Botão para fechar filtros -->
+        <div class="filters-row" style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 15px;">
+            <div class="form-group">
+                <button class="btn btn-outline-secondary" onclick="toggleAdvancedFilters()" style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-times"></i> Fechar Filtros
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="export-buttons">
+        <button class="btn btn-success" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Exportar Excel</button>
+        <button class="btn btn-info" onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="orders-table">
+            <thead>
+                <tr>
+                    <th>Favorecido</th>
+                    <th>Valor</th>
+                    <th>Tipo</th>
+                    <th>Prioridade</th>
+                    <th>Status</th>
+                    <th>Previsão</th>
+                    <th>Processo</th>
+                    <th>Empresa</th> 
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+            </tbody>
+        </table>
+    </div>
+</div> <!-- Fechamento da ordersTab -->
+
+            <!-- Aba: Cadastrar Ordem -->
+            <div id="addTab" class="tab-content">
+                <h2>Cadastrar Nova Ordem de Pagamento</h2>
+                <div id="addOrderPermissionCheck" class="permission-check"></div>
+                <form id="orderForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="favoredName">Nome do Favorecido <span class="required">*</span></label>
+                            <input type="text" id="favoredName" placeholder="Nome completo ou Razão Social" required list="favoredNamesDatalist">
+                            <datalist id="favoredNamesDatalist"></datalist>
+                        </div>
+                        <div class="form-group">
+                            <label for="paymentValue">Valor do Pagamento <span class="required">*</span></label>
+                            <input type="number" id="paymentValue" step="0.01" placeholder="0.00" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="generationDate">Data de Geração <span class="required">*</span></label>
+                            <input type="date" id="generationDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="paymentForecast">Previsão de Pagamento</label>
+                            <input type="date" id="paymentForecast">
+                        </div>
+                        <div class="form-group">
+                            <label for="paymentType">Tipo de Pagamento <span class="required">*</span></label>
+                            <select id="paymentType" onchange="showPaymentFields()" required>
+                                <option value="">Selecione...</option>
+                                <option value="PIX">PIX</option>
+                                <option value="Boleto">Boleto</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Campos específicos PIX -->
+                    <div id="pixFields" style="display: none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pixKeyType">Tipo de Chave PIX</label>
+                                <select id="pixKeyType">
+                                    <option value="">Selecione...</option>
+                                    <option value="CPF">CPF</option>
+                                    <option value="CNPJ">CNPJ</option>
+                                    <option value="Email">Email</option>
+                                    <option value="Telefone">Telefone</option>
+                                    <option value="Chave Aleatória">Chave Aleatória</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="pixKey">Chave PIX</label>
+                                <input type="text" id="pixKey" placeholder="Chave PIX">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos específicos Boleto -->
+                    <div id="boletoFields" style="display: none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="linhaDigitavel">Linha Digitavel</label>
+                                <input type="text" id="linhaDigitavel" placeholder="Linha digitável do boleto">
+                            </div>
+                            <div class="form-group">
+                                <label for="boletoFile">Anexar Boleto (PDF)</label>
+                                <input type="file" id="boletoFile" accept="application/pdf">
+                                <small class="text-muted">Anexe o arquivo PDF do boleto (opcional).</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos específicos Outros -->
+                    <div id="otherFields" style="display: none;">
+                        <div class="form-group">
+                            <label for="bankDetails">Detalhes Bancários</label>
+                            <textarea id="bankDetails" rows="3" placeholder="Dados da conta (Banco, Agência, Conta, etc.)"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="company">Empresa <span class="required">*</span></label>
+                            <!-- O select será populado dinamicamente pelo JavaScript -->
+                            <div id="companySelectContainer">
+                                <select id="company" name="company" class="form-control" required>
+                                    <option value="">Selecione uma empresa...</option>
+                                    <!-- Opções serão inseridas aqui via JS -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="process">Processo</label>
+                            <input type="text" id="process" placeholder="Nome do processo (Ex: Marketing)" list="processesList">
+                            <datalist id="processesList"></datalist>
+                        </div>
+                        <div class="form-group">
+                            <label for="priority">Prioridade</label>
+                            <select id="priority">
+                                <option value="Normal">Normal</option>
+                                <option value="Urgencia">Urgência</option>
+                                <option value="Emergencia">Emergência</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="direction">Direcionamento</label>
+                            <select id="direction">
+                                <option value="">Selecione...</option>
+                                <option value="Marina">Marina</option>
+                                <option value="Lucas">Lucas</option>
+                                <option value="Gabriel">Gabriel</option>
+                                <option value="Lotérica">Lotérica</option>
+                                <option value="Tiago">Tiago</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="solicitant">Solicitante</label>
+                            <select id="solicitant" onchange="toggleOtherSolicitant()">
+                                <option value="">Selecione...</option>
+                                <option value="Djael Jr">Djael Jr</option>
+                                <option value="Rafael Sagrilo">Rafael Sagrilo</option>
+                                <option value="Lucas Silva">Lucas Silva</option>
+                                <option value="Verônica Barbosa">Verônica Barbosa</option>
+                                <option value="Rafael Sayd">Rafael Sayd</option>
+                                <option value="Maurício Sena">Maurício Sena</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                            <div id="otherSolicitantGroup" style="display: none; margin-top: 10px;">
+                                <input type="text" id="otherSolicitantName" placeholder="Nome do Solicitante (Outro)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reference">Referência (Ex: Nota Fiscal 123)</label>
+                        <textarea id="reference" rows="3" placeholder="Informações adicionais para referência"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="observation">Observação</label>
+                        <textarea id="observation" rows="3" placeholder="Qualquer observação relevante"></textarea>
+                    </div>
+
+                    <!-- NOVO: Campo de preferência para enviar comprovante via WhatsApp -->
+                    <div class="form-group">
+                        <label>Enviar Comprovante de Pagamento via WhatsApp?</label>
+                        <div>
+                            <input type="radio" id="sendProofYes" name="sendProofToWhatsApp" value="yes" checked>
+                            <label for="sendProofYes">Sim</label>
+                            <input type="radio" id="sendProofNo" name="sendProofToWhatsApp" value="no">
+                            <label for="sendProofNo">Não</label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-success" id="addOrderBtn" onclick="addOrder(event)">Cadastrar Ordem</button>
+                        <button type="button" class="btn btn-secondary" onclick="clearForm()">Limpar Formulário</button>
+                    </div>z
+                </form>
+            </div>
+            <!-- Fechamento da addTab -->
+            <!-- NOVO CONTEÚDO DA ABA: Dados de Entrada -->
+            <div id="entryDataTab" class="tab-content">
+                <h2>Gestão de Dados de Entrada Personalizados</h2>
+
+              <!-- NOVO: Container para o Formulário de Cadastro de Dado de Entrada, inicialmente oculto -->
+                <div class="form-section" style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+                    <h3>Cadastrar Novo Dado de Entrada</h3>
+                    <form id="entryDataForm">
+                        <!-- LINHA 1: Processo e Empresa -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="entryProcess">Processo <span class="required">*</span></label>
+                                <input type="text" id="entryProcess" placeholder="Nome do processo (Ex: Marketing)" list="processesList" required>
+                                <datalist id="processesList"></datalist>
+                            </div>
+                            <div class="form-group">
+                                <label for="entryCompany">Empresa <span class="required">*</span></label>
+                                <select id="entryCompany" name="entryCompany" class="form-control" required>
+                                    <option value="">Selecione uma empresa...</option>
+                                    <!-- Opções serão inseridas via JS -->
+                                </select>
+                            </div>
+                        </div>
+                    
+                        <!-- LINHA 2: Data e Valor da Nota -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="entryDate">Data de Registro <span class="required">*</span></label>
+                                <input type="date" id="entryDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="entryValue">Valor da Nota (R$) <span class="required">*</span></label>
+                                <input type="text" id="entryValue" placeholder="R$ 0,00" inputmode="decimal" 
+                                       oninput="formatMonetaryInput(event)" required>
+                            </div>
+                        </div>
+                    
+                        <!-- LINHA 3: Observação -->
+                        <div class="form-row">
+                            <div class="form-group" style="flex: 1;">
+                                <label for="entryObservation">Observação</label>
+                                <textarea id="entryObservation" placeholder="Observações adicionais (opcional)" rows="3" style="width: 100%; resize: vertical;"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <hr style="margin-top: 0px; margin-bottom: 20px; border: none; border-top: 2px solid #ddd;">
+
+            <div class="controls-container" style="display: flex; justify-content: flex-start; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap;">
+            
+                <!-- Botão Cadastrar (Formulário) -->
+                <button type="button" class="btn btn-success" onclick="addCustomEntryData()" id="addCustomEntryDataBtn">
+                    <i class="fas fa-plus"></i> Cadastrar
+                </button>
+            
+                <!-- Botão Limpar Formulário -->
+                <button type="button" class="btn btn-secondary" onclick="clearCustomEntryForm()">
+                    <i class="fas fa-eraser"></i> Limpar Formulário
+                </button>
+            
+                <!-- Botão de Filtros -->
+                <button id="toggleCustomEntryDataFiltersBtn" class="btn btn-primary" onclick="toggleCustomEntryDataAdvancedFilters()" style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-filter"></i> Filtros
+                </button>
+            
+                <!-- Controles de Paginação -->
+                <div id="customEntryDataPaginationControls" class="pagination-controls" style="display: flex; align-items: center; gap: 10px;">
+                    <button id="customEntryDataPrevPageBtn" class="btn btn-sm btn-outline-primary" onclick="customEntryDataPrevPage()">Página Anterior</button>
+                    <span id="customEntryDataPageInfo" style="font-weight: bold; white-space: nowrap;">Página 1 de 1</span>
+                    <button id="customEntryDataNextPageBtn" class="btn btn-sm btn-outline-primary" onclick="customEntryDataNextPage()">Próxima Página</button>
+                </div>
+            
+            </div>
+                <!-- NOVO: Filtros Avançados para Dados de Entrada Personalizados (INICIALMENTE OCULTOS) -->
+                <div id="customEntryDataAdvancedFiltersContainer" class="filters-container" style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; display: none;">
+                    <h3 style="margin-top: 0; color: #333;">🔍 Filtros e Ordenação Avançados para Dados de Entrada</h3>
+                                        
+                    <div class="filters-row">
+                        <div class="form-group">
+                            <label for="filterCustomEntryCompany">Empresa:</label>
+                            <select id="filterCustomEntryCompany" onchange="applyCustomEntryDataFilters()">
+                                <option value="">Todas</option>
+                                <!-- Opções serão preenchidas via JS -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="filterCustomEntryProcess">Processo:</label>
+                            <input type="text" id="filterCustomEntryProcess" placeholder="Filtrar por processo..." oninput="debouncedApplyCustomEntryDataFilters()" list="processesList">
+                            <datalist id="processesList"></datalist>
+                        </div>
+                        <div class="form-group">
+                            <label for="filterCustomEntryStatus">Status:</label>
+                            <select id="filterCustomEntryStatus" onchange="applyCustomEntryDataFilters()">
+                                <option value="">Todos</option>
+                                <option value="Pendente">Pendente</option>
+                                <option value="Pago">Pago</option>
+                                <option value="Cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filters-row">
+                        <div class="form-group">
+                            <label for="filterCustomEntryDateStart">Data Inicial:</label>
+                            <input type="date" id="filterCustomEntryDateStart" onchange="applyCustomEntryDataFilters()">
+                        </div>
+                        <div class="form-group">
+                            <label for="filterCustomEntryDateEnd">Data Final:</label>
+                            <input type="date" id="filterCustomEntryDateEnd" onchange="applyCustomEntryDataFilters()">
+                        </div>
+                        <div class="form-group">
+                            <label for="filterCustomEntryValueMin">Valor Mínimo:</label>
+                            <input type="number" id="filterCustomEntryValueMin" step="0.01" placeholder="0,00" oninput="debouncedApplyCustomEntryDataFilters()">
+                        </div>
+                        <div class="form-group">
+                            <label for="filterCustomEntryValueMax">Valor Máximo:</label>
+                            <input type="number" id="filterCustomEntryValueMax" step="0.01" placeholder="999999,99" oninput="debouncedApplyCustomEntryDataFilters()">
+                        </div>
+                    </div>
+                    <div class="filters-row">
+                        <div class="form-group">
+                            <label for="searchCustomEntryTerm">Buscar:</label>
+                            <input type="text" id="searchCustomEntryTerm" placeholder="Processo ou Empresa..." oninput="debouncedApplyCustomEntryDataFilters()">
+                        </div>
+                        <div class="form-group">
+                            <label for="sortCustomEntryBy">Ordenar por:</label>
+                            <select id="sortCustomEntryBy" onchange="applyCustomEntryDataFilters()">
+                                <option value="entryDate_desc">Data (Mais Recente)</option>
+                                <option value="entryDate_asc">Data (Mais Antiga)</option>
+                                <option value="value_desc">Valor (Maior)</option>
+                                <option value="value_asc">Valor (Menor)</option>
+                                <option value="company">Empresa A-Z</option>
+                                <option value="process">Processo A-Z</option>
+                                <option value="status">Status</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="filters-row" style="margin-top: 15px;">
+                        <div class="form-group">
+                            <button class="btn btn-primary" onclick="applyCustomEntryDataFilters()"> Aplicar Filtros</button>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-secondary" onclick="clearCustomEntryDataFilters()">🗑️ Limpar Filtros</button>
+                        </div>
+                    </div>
+                    <div class="filters-row" style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 15px;">
+                        <div class="form-group">
+                            <button class="btn btn-outline-secondary" onclick="toggleCustomEntryDataAdvancedFilters()" style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-times"></i> Fechar Filtros
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="export-buttons">
+                    <button class="btn btn-success" onclick="exportCustomEntryDataToExcel()"><i class="fas fa-file-excel"></i> Exportar Excel</button>
+                    <button class="btn btn-info" onclick="exportCustomEntryDataToPDF()"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+                </div>
+            
+            <div style="overflow-x: auto; margin-top: 15px;">
+                <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>Processo</th>
+                        <th>Empresa</th>
+                        <th>Observação</th>
+                        <th>Data de Registro</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                    <tbody id="entryDataTableBody">
+                        <!-- Dados de Entrada serão listados aqui -->
+                    </tbody>
+                </table>
+            </div>
+            </div>
+            <!-- FIM DO NOVO CONTEÚDO DA ABA 'DADOS DE ENTRADA' -->
+            
+                                
+                <!-- ===== SEÇÃO: ADICIONAR NOTA (FORMULÁRIO ÚNICO) ===== -->
+                <div id="secaoAdicionarNota" style="display: none; padding: 20px; background-color: white; border: 1px solid #ddd; border-radius: 8px; margin-top: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h4 style="margin: 0; color: #333; font-size: 16px; font-weight: bold;">Adicionar Notas ao Dado de Entrada</h4>
+                        <button type="button" onclick="fecharSecaoNotas()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
+                    </div>
+                
+                    <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #007bff;">
+                        <p style="margin: 0; font-weight: bold;">Processo: <span id="infoProcesso"></span></p>
+                        <p style="margin: 5px 0 0 0;">Empresa: <span id="infoEmpresa"></span></p>
+                    </div>
+                
+                    <!-- ===== ÚNICO FORMULÁRIO DE ENTRADA ===== -->
+                    <form id="formAdicionarNota" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        
+                        <div class="form-group">
+                            <label for="mesInput" style="font-weight: bold; color: #333; display: block; margin-bottom: 8px;">Mês <span class="required">*</span></label>
+                            <select id="mesInput" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; color: #000;">
+                                <option value="">Selecione...</option>
+                                <option value="Janeiro">Janeiro</option>
+                                <option value="Fevereiro">Fevereiro</option>
+                                <option value="Março">Março</option>
+                                <option value="Abril">Abril</option>
+                                <option value="Maio">Maio</option>
+                                <option value="Junho">Junho</option>
+                                <option value="Julho">Julho</option>
+                                <option value="Agosto">Agosto</option>
+                                <option value="Setembro">Setembro</option>
+                                <option value="Outubro">Outubro</option>
+                                <option value="Novembro">Novembro</option>
+                                <option value="Dezembro">Dezembro</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="valorNotaInput" style="font-weight: bold; color: #333; display: block; margin-bottom: 8px;">Valor (R$) <span class="required">*</span></label>
+                            <input type="text" id="valorNotaInput" placeholder="R$ 0,00" oninput="formatMonetaryInput(event)" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; color: #000;">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dataNotaInput" style="font-weight: bold; color: #333; display: block; margin-bottom: 8px;">Data <span class="required">*</span></label>
+                            <input type="date" id="dataNotaInput" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; color: #000;">
+                        </div>
+                    </form>
+                    
+                    <!-- ===== BOTÕES: CADASTRAR NOTA E LIMPAR ===== -->
+                    <div class="form-actions" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <button type="button" id="btnCadastrarNota" class="btn btn-success" onclick="cadastrarNota()">
+                            Cadastrar Nota
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="limparFormularioNota()">
+                            Limpar
+                        </button>
+                    </div>
+                    
+                    <!-- ===== LISTA DE NOTAS CADASTRADAS (SEM CAMPOS ANTES DOS BOTÕES) ===== -->
+                    <div id="containerNotasMultiplas" style="display: none;">
+                        <h4 style="color: #333; margin-bottom: 15px; margin-top: 0;">Notas Cadastradas</h4>
+                        <div id="linhasNotasAdicionais" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;"></div>
+                        
+                        <!-- ===== APENAS BOTÕES CONCLUIR E CANCELAR ===== -->
+                        <div class="form-actions" style="display: flex; gap: 10px; padding-top: 20px; border-top: 1px solid #ddd;">
+                            <button type="button" class="btn btn-success" onclick="concluirCadastroNotas()">Concluir</button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="cancelarCadastroNotas()">Cancelar</button>
+                        </div>
+                    </div>
+                
+                </div>  
+            
+            <!-- Aba: Diretoria -->
+            <div id="diretoriaTab" class="tab-content">
+                <div id="diretoriaPermissionCheck"></div>
+                <h2>Ordens Aguardando Aprovação da Diretoria</h2>
+                <!-- Novos botões de Ação em Massa para Diretoria -->
+                <div class="bulk-actions" style="margin-bottom: 15px;">
+                    <button class="btn btn-success" id="bulkApproveOrdersBtn_diretoria" onclick="bulkApproveOrders('diretoria')" disabled>
+                        Aprovar Selecionados (<span id="selectedOrdersCountApprove_diretoria">0</span>)
+                    </button>
+                    <button class="btn btn-secondary" id="bulkReproveOrdersBtn_diretoria" onclick="bulkReproveOrders('diretoria')" disabled>
+                        Reprovar Selecionados (<span id="selectedOrdersCountReprove_diretoria">0</span>)
+                    </button>
+                    <button class="btn btn-info" id="bulkEditOrdersBtn_diretoria" onclick="bulkEditOrders('diretoria')" disabled>
+                        Editar Selecionados (<span id="selectedOrdersCount_diretoria">0</span>)
+                    </button>
+                    <button class="btn btn-danger" id="bulkDeleteOrdersBtn_diretoria" onclick="bulkDeleteOrders('diretoria')" disabled>
+                        Excluir Selecionados (<span id="selectedOrdersCountDelete_diretoria">0</span>)
+                    </button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <!-- NOVO: Checkbox 'Selecionar Tudo' -->
+                                <th><input type="checkbox" id="selectAllCheckbox_diretoria" onchange="window.toggleSelectAllOrders(this, 'diretoria')"></th>
+                                <th>Favorecido</th>
+                                <th>Valor</th>
+                                <th>Tipo</th>
+                                <th>Prioridade</th>
+                                <th>Status</th>
+                                <th>Previsão</th>
+                                <th>Processo</th>
+                                <th>Empresa</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="diretoriaTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Aba: Financeiro -->
+            <div id="financeiroTab" class="tab-content">
+                <div id="financeiroPermissionCheck"></div>
+                <h2>Ordens Aguardando Aprovação do Financeiro</h2>
+                <!-- Novos botões de Ação em Massa para Financeiro -->
+                <div class="bulk-actions" style="margin-bottom: 15px;">
+                    <button class="btn btn-success" id="bulkApproveOrdersBtn_financeiro" onclick="bulkApproveOrders('financeiro')" disabled>
+                        Aprovar Selecionados (<span id="selectedOrdersCountApprove_financeiro">0</span>)
+                    </button>
+                    <button class="btn btn-secondary" id="bulkReproveOrdersBtn_financeiro" onclick="bulkReproveOrders('financeiro')" disabled>
+                        Reprovar Selecionados (<span id="selectedOrdersCountReprove_financeiro">0</span>)
+                    </button>
+                    <button class="btn btn-info" id="bulkEditOrdersBtn_financeiro" onclick="bulkEditOrders('financeiro')" disabled>
+                        Editar Selecionados (<span id="selectedOrdersCount_financeiro">0</span>)
+                    </button>
+                    <button class="btn btn-danger" id="bulkDeleteOrdersBtn_financeiro" onclick="bulkDeleteOrders('financeiro')" disabled>
+                        Excluir Selecionados (<span id="selectedOrdersCountDelete_financeiro">0</span>)
+                    </button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <!-- NOVO: Checkbox 'Selecionar Tudo' -->
+                                <th><input type="checkbox" id="selectAllCheckbox_financeiro" onchange="toggleSelectAllOrders(this, 'financeiro')"></th>
+                                <th>Favorecido</th>
+                                <th>Valor</th>
+                                <th>Tipo</th>
+                                <th>Prioridade</th>
+                                <th>Status</th>
+                                <th>Previsão</th>
+                                <th>Processo</th>
+                                <th>Empresa</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="financeiroTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Aba: Pendentes Pagamento -->
+            <div id="pendingTab" class="tab-content">
+                <div id="pendingPermissionCheck"></div>
+                <h2>Ordens Pendentes de Pagamento</h2>
+                <div style="overflow-x: auto;">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Favorecido</th>
+                                <th>Valor</th>
+                                <th>Tipo</th>
+                                <th>Prioridade</th>
+                                <th>Status</th>
+                                <th>Previsão</th>
+                                <th>Processo</th>
+                                <th>Empresa</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Aba: Ordens Pagas -->
+            <div id="paidTab" class="tab-content">
+                <h2>Ordens Pagas</h2>
+                <!-- Container centralizado para todos os botões de controle (FILTROS, MOSTRAR TODAS, PAGINAÇÃO) -->
+                <div class="controls-container" style="display: flex; justify-content: center; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap;">
+                    
+                    <!-- Botão Filtros -->
+                    <button id="togglePaidFiltersBtn" class="btn btn-primary" onclick="togglePaidAdvancedFilters()" style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-filter"></i> Filtros
+                    </button>
+                    
+                    <!-- Botão de Visualização (Alternar entre Mostrar Todas / Voltar para Paginação) -->
+                    <button id="togglePaidShowAllItemsBtn" class="btn btn-info" onclick="togglePaidShowAllItems()" style="display:block; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-list-alt"></i> Mostrar todos os itens pagos
+                    </button>
+                    
+                    <!-- Controles de Paginação -->
+                    <div id="paidPaginationControls" class="pagination-controls" style="display: flex; align-items: center; gap: 10px;">
+                        <button id="paidPrevPageBtn" class="btn btn-sm btn-outline-primary" onclick="paidPrevPage()">Página Anterior</button>
+                        <span id="paidPageInfo" style="font-weight: bold; white-space: nowrap;">Página 1 de 1</span>
+                        <button id="paidNextPageBtn" class="btn btn-sm btn-outline-primary" onclick="paidNextPage()">Próxima Página</button>
+                    </div>
+                </div>
+
+                <!-- Filtros Avançados e Ordenação para ITENS PAGOS (INICIALMENTE OCULTOS) -->
+                <div id="paidAdvancedFiltersContainer" class="filters-container" style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; display: none;">
+                    <h3 style="margin-top: 0; color: #333;">🔍 Filtros e Ordenação Avançados para Itens Pagos</h3>
+                    
+                    <div class="filters-row">
+                        <div class="form-group">
+                            <label for="paidFilterStartDate">Data Pagamento Início:</label>
+                            <input type="date" id="paidFilterStartDate" onchange="debouncedApplyPaidFilters()">
+                        </div>
+                        <div class="form-group">
+                            <label for="paidFilterEndDate">Data Pagamento Fim:</label>
+                            <input type="date" id="paidFilterEndDate" onchange="debouncedApplyPaidFilters()">
+                        </div>
+                        <div class="form-group">
+                            <label for="paidFavoredFilter">Favorecido:</label>
+                            <select id="paidFavoredFilter" onchange="debouncedApplyPaidFilters()">
+                                <option value="">Todos os Favorecidos</option>
+                                <!-- Opções preenchidas via JS -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="paidSolicitantFilter">Solicitante:</label>
+                            <select id="paidSolicitantFilter" onchange="debouncedApplyPaidFilters()">
+                                <option value="">Todos os solicitantes</option>
+                                <!-- Opções preenchidas via JS -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="filters-row">
+                        <!-- NOVO BLOCO PARA FILTRO DE PROCESSO PERSONALIZADO (Ordens Pagas) -->
+                        <div class="form-group paid-orders-process-filter-group">
+                            <label>Processo:</label>
+                            <div class="custom-multi-select-dropdown-wrapper">
+                                <div id="paidOrdersProcessDisplay" class="custom-multi-select-display" onclick="togglePaidOrdersProcessDropdown(event)">
+                                    Todos os processos
+                                </div>
+                                <div id="paidOrdersProcessDropdownContent" class="custom-multi-select-dropdown-content">
+                                    <div id="paidOrdersProcessFilterCheckboxesContainer" class="custom-multi-select-bar">
+                                        <label class="custom-multi-select-option">
+                                            <input type="checkbox" value="" class="paid-orders-process-filter-checkbox" onchange="handlePaidOrdersProcessCheckboxChange(this.value, this.checked)">
+                                            <span>Todos os processos</span>
+                                        </label>
+                                        <!-- Os outros checkboxes de processo serão inseridos aqui via JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- FIM DO NOVO BLOCO -->
+                        <!-- NOVO CAMPO: FILTRO DE EMPRESA -->
+                        <div class="form-group">
+                            <label for="paidFilterCompany">Empresa:</label>
+                            <select id="paidFilterCompany" onchange="debouncedApplyPaidFilters()">
+                                <option value="">Todas as Empresas</option>
+                                <!-- Opções serão preenchidas via JS -->
+                            </select>
+                        </div>
+                        <!-- FIM NOVO CAMPO -->
+
+                        <div class="form-group">
+                            <label for="paidFilterPaymentType">Tipo:</label>
+                            <select id="paidFilterPaymentType" onchange="debouncedApplyPaidFilters()">
+                                <option value="">Todos os tipos</option>
+                                <option value="PIX">PIX</option>
+                                <option value="Boleto">Boleto</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="paidFilterPriority">Prioridade:</label>
+                            <select id="paidFilterPriority" onchange="debouncedApplyPaidFilters()">
+                                <option value="">Todas as prioridades</option>
+                                <option value="Emergencia">Emergência</option>
+                                <option value="Urgencia">Urgência</option>
+                                <option value="Normal">Normal</option>
+                                <option value="Baixa">Baixa</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="filters-row">
+                        <div class="form-group">
+                            <label for="paidSortBy">Ordenar por:</label>
+                            <select id="paidSortBy" onchange="debouncedApplyPaidFilters()">
+                                <option value="paymentDate_desc">Data Pagamento (Mais Recente)</option>
+                                <option value="paymentDate_asc">Data Pagamento (Mais Antiga)</option>
+                                <option value="favoredName">Favorecido A-Z</option>
+                                <option value="paymentValue_desc">Valor (Maior)</option>
+                                <option value="paymentValue_asc">Valor (Menor)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Botões de ação dos filtros -->
+                    <div class="filters-row" style="margin-top: 15px;">
+                        <div class="form-group">
+                            <button class="btn btn-primary" onclick="debouncedApplyPaidFilters()">🔍 Aplicar Filtros</button>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-secondary" onclick="clearPaidFilters()">🗑️ LimparFiltros</button>
+                        </div>
+                    </div>
+
+                    <!-- Botão para fechar filtros -->
+                    <div class="filters-row" style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 15px;">
+                        <div class="form-group">
+                            <button class="btn btn-outline-secondary" onclick="togglePaidAdvancedFilters()" style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-times"></i> Fechar Filtros
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões de Exportação -->
+                <div class="export-buttons">
+                    <button class="btn btn-success" onclick="exportPaidToExcel()"><i class="fas fa-file-excel"></i> Exportar Excel</button>
+                    <button class="btn btn-info" onclick="exportPaidToPDF()"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+                </div>
+
+                <!-- Tabela de Ordens Pagas -->
+                <div style="overflow-x: auto;">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Favorecido</th>
+                                <th>Valor da Ordem</th>
+                                <th>Tipo</th>
+                                <th>Prioridade</th>
+                                <th>Solicitante</th>
+                                <th>Processo</th>
+                                <th>Empresa</th> <!-- NOVA COLUNA NA TABELA -->
+                                <th>Status/Data</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paidOrdersTableBody">
+                            <!-- Ordens pagas serão listadas aqui -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Aba: Dados de Saída (Dashboard + Relatório) -->
+            <div id="reportsTab" class="tab-content">
+                <h2>Dashboard de Dados de Saída</h2>
+
+                <!-- Container de Controles e Filtros do Dashboard -->
+                <div class="dashboard-controls-container filter-panel">
+                    <div class="filter-header">
+                        <i class="fas fa-search icon-primary"></i> <!-- Ícone de Lupa para o cabeçalho -->
+                        <h1>Filtros do Dashboard</h1>
+                    </div>
+
+                    <!-- SELECTORES DE MÊS INICIAL/FINAL -->
+                    <div id="dashboardMonthYearFilters" class="form-group-row" style="align-items: flex-end; gap: 10px; margin-bottom: 20px;">
+                        <div class="form-group">
+                            <label for="dashboardStartMonthSelect">Mês Inicial:</label>
+                            <div style="display:flex; gap: 5px;">
+                                <select id="dashboardStartMonthSelect" class="custom-select" style="flex: 2;" onchange="applyDashboardFilters()"></select>
+                                <input type="number" id="dashboardStartYearInput" class="custom-input-year" placeholder="AAAA" min="1900" max="2100" value="" style="flex: 1;" onchange="applyDashboardFilters()">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="dashboardEndMonthSelect">Mês Final:</label>
+                            <div style="display:flex; gap: 5px;">
+                                <select id="dashboardEndMonthSelect" class="custom-select" style="flex: 2;" onchange="applyDashboardFilters()"></select>
+                                <input type="number" id="dashboardEndYearInput" class="custom-input-year" placeholder="AAAA" min="1900" max="2100" value="" style="flex: 1;" onchange="applyDashboardFilters()">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-columns">
+                        <!-- FILTRO DE EMPRESA (lista de checkboxes customizada) -->
+                        <div class="filter-group">
+                            <label>Empresa:</label>
+                            <div class="multi-select-list" id="dashboardFilterCompanyList">
+                                <!-- Opções serão preenchidas via JS -->
+                            </div>
+                        </div>
+
+                        <!-- FILTRO DE PROCESSO (lista de checkboxes customizada) -->
+                        <div class="filter-group">
+                            <label>Processo:</label>
+                            <div class="multi-select-list" id="dashboardFilterProcessList">
+                                <!-- Opções serão preenchidas via JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botões de Ação para o Painel de Filtros -->
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="applyDashboardFilters()">
+                            <i class="fas fa-filter"></i>
+                            Aplicar Filtros
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearDashboardFilters()">
+                            <i class="fas fa-trash-alt"></i>
+                            Limpar Filtros
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Cards de Métricas do Dashboard -->
+                <div class="dashboard-metrics-grid">
+                    <div class="metric-card card-total-cost">
+                        <i class="metric-icon fas fa-dollar-sign"></i>
+                        <h4>Custo Total</h4>
+                        <p id="dashboardTotalCost">R\$ 0,00</p>
+                    </div>
+                    <div class="metric-card card-order-cost">
+                        <i class="metric-icon fas fa-file-invoice-dollar"></i>
+                        <h4>Custo Ordens Pagamento</h4>
+                        <p id="dashboardOrderCost">R\$ 0,00</p>
+                    </div>
+                    <div class="metric-card card-boleto-cost">
+                        <i class="metric-icon fas fa-barcode"></i>
+                        <h4>Custo Boletos</h4>
+                        <p id="dashboardBoletoCost">R\$ 0,00</p>
+                    </div>
+                    <div class="metric-card card-salary-cost">
+                        <i class="metric-icon fas fa-wallet"></i>
+                        <h4>Custo Salários/Auxílios</h4>
+                        <p id="dashboardSalaryCost">R\$ 0,00</p>
+                    </div>
+                    <div class="metric-card card-transactions">
+                        <i class="metric-icon fas fa-list-ol"></i>
+                        <h4>Nº de Lançamentos</h4>
+                        <p id="dashboardTotalTransactions">0</p>
+                    </div>
+                    <div class="metric-card card-income">
+                        <i class="metric-icon fas fa-hand-holding-usd"></i>
+                        <h4>Total Entradas</h4>
+                        <p id="dashboardIncome">R\$ 0,00</p>
+                    </div>
+                    <div class="metric-card card-difference">
+                        <i class="metric-icon fas fa-balance-scale"></i>
+                        <h4>Diferença (Entradas - Saídas)</h4>
+                        <p id="dashboardDifference" class=""></p>
+                    </div>
+                    <!-- CARD PARA VALOR TOTAL DE ORDENS PENDENTES (Dados de Entrada) -->
+                    <div class="metric-card card-pending-orders">
+                        <i class="metric-icon fas fa-hourglass-half"></i>
+                        <h4>Valor Ordens Pendentes</h4>
+                        <p id="dashboardPendingOrdersValue">R\$ 0,00</p>
+                    </div>
+                    <!-- NOVO CARD PARA QUANTIDADE DE ORDENS PENDENTES (Dados de Entrada) -->
+                    <div class="metric-card card-pending-orders-count">
+                        <i class="metric-icon fas fa-list-ul"></i>
+                        <h4>Qtd. Ordens Pendentes</h4>
+                        <p id="dashboardPendingOrdersCount">0</p>
+                    </div>
+                </div>
+
+                <h2 style="margin-top: 30px;">Relatório Detalhado de Pagamentos por Processo</h2>
+                <div class="filters">
+                    <div class="filters-row">
+                        <div class="form-group">
+                            <label for="reportFilterProcess">Processo:</label>
+                            <input type="text" id="reportFilterProcess" placeholder="Filtrar por processo" oninput="debouncedApplyReportFilters()">
+                        </div>
+                        <div class="form-group">
+                            <label for="reportFilterMonth">Mês/Ano:</label>
+                            <input type="month" id="reportFilterMonth" onchange="applyReportFilters()">
+                        </div>
+                        <div class="form-group">
+                            <label for="reportFilterYear">Ano:</label>
+                            <select id="reportFilterYear" onchange="applyReportFilters()">
+                                <option value="">Todos os anos</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button class="btn" onclick="clearReportFilters()">Limpar Filtros</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões de exportação para a tabela de relatório -->
+                <div class="export-buttons">
+                    <button class="btn btn-success" onclick="exportReportToExcel()"><i class="fas fa-file-excel"></i> Exportar Excel</button>
+                    <button class="btn btn-info" onclick="exportReportToPDF()"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+                </div>
+
+                <!-- Tabela de Relatório Existente -->
+                <div style="overflow-x: auto;">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Processo</th>
+                                <th>Mês/Ano</th>
+                                <th>Quantidade de Pagamentos</th>
+                                <th>Valor Total Pago</th>
+                                <th>Valor Médio</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Aba: Salários/Auxílios -->
+            <div id="salariesTab" class="tab-content">
+                <div id="salariesPermissionCheck"></div>
+                <h2>Gestão de Salários e Auxílios</h2>
+                
+                <!-- NOVO: Container para o Formulário de Cadastro de Salário, inicialmente oculto -->
+                <!-- O conteúdo original do formulário (salaryFormSection) será movido para dentro deste div -->
+                <div id="addSalaryFormContainer" style="display: none;">
+                    <!-- Formulário de Cadastro ORIGINAL -->
+                    <div class="form-section" style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px;" id="salaryFormSection">
+                        <h3>Cadastrar Novo Salário/Auxílio</h3>
+                        <form id="salaryForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="salaryType">Tipo <span class="required">*</span></label>
+                                    <select id="salaryType" required>
+                                        <option value="">Selecione...</option>
+                                        <option value="Salário">Salário</option>
+                                        <option value="Auxílio">Auxílio</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="salaryFavoredName">Nome do Favorecido <span class="required">*</span></label>
+                                    <input type="text" id="salaryFavoredName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="salaryBank">Banco <span class="required">*</span></label>
+                                    <input type="text" id="salaryBank" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="salaryAgency">Agência <span class="required">*</span></label>
+                                    <input type="text" id="salaryAgency" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="salaryAccount">Conta <span class="required">*</span></label>
+                                    <input type="text" id="salaryAccount" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="salaryOperation">N° de Operação</label>
+                                    <input type="text" id="salaryOperation">
+                                </div>
+                                <div class="form-group">
+                                    <label for="salaryProcess">Processo</label>
+                                    <input type="text" id="salaryProcess">
+                                </div>
+                                <div class="form-group">
+                                    <label for="salaryValue">Valor <span class="required">*</span></label>
+                                    <input type="number" id="salaryValue" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="salaryYearInput">Ano <span class="required">*</span></label>
+                                    <input type="number" id="salaryYearInput" required min="1900" max="2100" value="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="salaryMonthSelect">Mês <span class="required">*</span></label>
+                                    <select id="salaryMonthSelect" required>
+                                        <!-- Opções serão preenchidas via JavaScript -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-success" onclick="addSalary()" id="addSalaryBtn">Cadastrar</button>
+                                <button type="button" class="btn btn-secondary" onclick="clearSalaryForm()">Limpar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Seção de Gerenciamento de Salários (Atualizada) -->
+                <div id="salariesBackupSection" class="backup-section" style="display: none;">
+                    <h3>⚙️ Gerenciamento de Salários/Auxílios</h3>
+                    <p>Gerencie a visualização de salários/auxílios para melhorar a performance. Os dados permanecem no banco de dados.</p>
+                    
+                    <!-- Status Atual -->
+                    <div class="status-info" style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 6px; padding: 15px; margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 10px 0; color: #1565c0;">📊 Status Atual</h4>
+                        <div id="salariesStatusInfo" style="font-size: 14px; color: #1976d2;">
+                            Carregando informações...
+                        </div>
+                    </div>
+                    
+                    <!-- Formulário de Período -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="salaryBackupYearStart">Ano Inicial:</label>
+                            <input type="number" id="salaryBackupYearStart" placeholder="AAAA" min="1900" max="2100">
+                        </div>
+                        <div class="form-group">
+                            <label for="salaryBackupMonthStartSelect">Mês Inicial:</label>
+                            <select id="salaryBackupMonthStartSelect">
+                                <!-- Opções serão preenchidas via JavaScript -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="salaryBackupYearEnd">Ano Final:</label>
+                            <input type="number" id="salaryBackupYearEnd" placeholder="AAAA" min="1900" max="2100">
+                        </div>
+                        <div class="form-group">
+                            <label for="salaryBackupMonthEndSelect">Mês Final:</label>
+                            <select id="salaryBackupMonthEndSelect">
+                                <!-- Opções serão preenchidas via JavaScript -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Botões de Ação -->
+                    <div class="form-row" style="margin-top: 15px;">
+                        <div class="form-group">
+                            <button class="btn btn-danger" onclick="retirarSalariosVisualizacao()" id="hideSalariesBtn">
+                                ✖️ Retirar da Visualização
+                            </button>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-success" onclick="recuperarSalariosVisualizacao()" id="recoverSalariesBtn">
+                                🔄 Recuperar Dados
+                            </button>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-secondary" onclick="toggleSalariesBackupSection()">
+                                ❌ Fechar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="filters">
+                    <div class="filters-row">
+                        <div class="form-group">
+                            <label for="salaryFilterType">Tipo:</label>
+                            <select id="salaryFilterType" onchange="applySalaryFilters()">
+                                <option value="">Todos</option>
+                                <option value="Salário">Salário</option>
+                                <option value="Auxílio">Auxílio</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="salaryFilterYearInput">Ano:</label>
+                            <input type="number" id="salaryFilterYearInput" placeholder="Todos os Anos" oninput="debouncedApplySalaryFilters()">
+                        </div>
+                        <div class="form-group">
+                            <label for="salaryFilterMonthSelect">Mês:</label>
+                            <select id="salaryFilterMonthSelect" onchange="applySalaryFilters()">
+                                <!-- Opções serão preenchidas via JavaScript -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="salaryFilterProcess">Processo:</label>
+                            <input type="text" id="salaryFilterProcess" placeholder="Filtrar por processo..." oninput="debouncedApplySalaryFilters()">
+                        </div>
+                        <div class="form-group">
+                            <label for="salaryFilterBank">Banco:</label>
+                            <input type="text" id="salaryFilterBank" placeholder="Filtrar por banco..." oninput="debouncedApplySalaryFilters()">
+                        </div>
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button class="btn" onclick="clearSalaryFilters()">🗑Limpar Filtros</button>
+                        </div>
+                    </div>
+                </div>
+                
+            <!-- Botões de Ação para Salários/Auxílios (Atualizado com Seleção) -->
+            <div class="action-buttons" style="margin: 10px 0; position: relative;">
+                <!-- NOVO BOTÃO: Cadastrar Salário/Auxílio -->
+                <button type="button" onclick="toggleAddSalaryForm()" class="btn btn-success" id="toggleAddSalaryFormBtn">
+                    <i class="fas fa-plus"></i> Cadastrar Salário/Auxílio
+                </button>
+
+                <button type="button" onclick="replicateSalaries()" class="btn btn-info" id="replicateSalariesBtn">
+                    📋 Replicar selecionados (<span id="replicateCount">0</span>)
+                </button>
+                <button type="button" onclick="openBulkEditSalaryModal()" class="btn btn-primary" id="bulkEditSalariesBtn" disabled>
+                    ✏️ Editar Selecionados (<span id="selectedSalariesCount">0</span>)
+                </button>
+                <button type="button" onclick="deleteSelectedSalaries()" class="btn btn-danger" id="bulkDeleteSalariesBtn" disabled>
+                    🗑️ Excluir Selecionados (<span id="selectedSalariesCountDelete">0</span>)
+                </button>
+                <button type="button" onclick="toggleSalariesBackupSection()" class="btn btn-warning" id="toggleSalariesBackupBtn">
+                    ⚙️ Gerenciamento
+                </button>
+            </div>
+            
+                <!-- Botões de Exportação -->
+                <div class="export-buttons">
+                    <button class="btn btn-info" onclick="exportSalariesToPDF()"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+                </div>
+
+                <!-- Tabela de Salários -->
+                <div style="overflow-x: auto;">
+                    <table class="orders-table" id="salariesTable">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAllSalariesCheckbox" onchange="toggleSelectAllSalaries(this)"></th>
+                                <th>Tipo</th>
+                                <th>Favorecido</th>
+                                <th>Banco</th>
+                                <th>Agência</th>
+                                <th>Conta</th>
+                                <th>Operação</th>
+                                <th>Processo</th>
+                                <th>Valor</th>
+                                <th>Mês</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salariesTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+                       <!-- Aba: Dados de Saída 2 -->
+            <div id="reports2Tab" class="tab-content">
+                <h2>Dados de Saída 2 - Resumo de Salários e Auxílios</h2>
+                
+                <div class="filters">
+                    <div class="filters-row">
+                        <div class="form-group">
+                            <label for="reports2FilterType">Tipo:</label>
+                            <select id="reports2FilterType" onchange="applyReports2Filters()">
+                                <option value="">Todos</option>
+                                <option value="Salário">Salário</option>
+                                <option value="Auxílio">Auxílio</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="reports2FilterProcess">Processo:</label>
+                            <input type="text" id="reports2FilterProcess" placeholder="Filtrar por processo..." oninput="debouncedApplyReports2Filters()">
+                        </div>
+                        <div class="form-group">
+                            <label for="reports2FilterBank">Banco:</label>
+                            <input type="text" id="reports2FilterBank" placeholder="Filtrar por banco..." oninput="debouncedApplyReports2Filters()">
+                        </div>
+                        <div class="form-group">
+                            <label for="reports2FilterMonth">Mês:</label>
+                            <input type="month" id="reports2FilterMonth" onchange="applyReports2Filters()">
+                        </div>
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button class="btn" onclick="clearReports2Filters()">🗑Limpar Filtros</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="export-buttons">
+                    <button class="btn btn-info" onclick="exportReports2ToPDF()"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Banco</th>
+                                <th>Processo</th>
+                                <th>Mês</th>
+                                <th>Quantidade</th>
+                                <th>Valor Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reports2TableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- FIM DA ABA: Dados de Saída 2 -->
+
+            <!-- INÍCIO: NOVA ABA DE HISTÓRICO DE DEPÓSITO -->
+            <div id="depositsTab" class="tab-content">
+                <h2>Histórico de Depósito</h2>
+                <div class="form-section" style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+                    <h3>Registrar Novo Depósito</h3>
+                    <form id="depositForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="depositDate">Data do Depósito <span class="required">*</span></label>
+                                <input type="date" id="depositDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="depositValueInput">Valor do Depósito <span class="required">*</span></label>
+                                <input type="number" id="depositValueInput" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="depositProof">Comprovante de Pagamento</label>
+                            <input type="file" id="depositProof" accept="image/*,.pdf">
+                            <small style="color: #666; display: block; margin-top: 5px;">
+                                Anexar comprovante (imagem ou PDF) - Opcional
+                            </small>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-success" onclick="addDeposit()" id="addDepositBtn">Registrar Depósito</button>
+                            <button type="button" class="btn btn-secondary" onclick="clearDepositForm()">Limpar</button>
+                        </div>
+                    </form>
+                </div>
+
+                <h3>Depósitos Realizados</h3>
+                <div style="overflow-x: auto;">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Valor</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="depositsTableBody">
+                            <!-- Os depósitos serão listados aqui -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- FIM: NOVA ABA DE HISTÓRICO DE DEPÓSITO -->
+
+            <!-- Aba: Boletos -->
+            <div id="boletosTab" class="tab-content">
+                <h2>Gestão de Boletos</h2>
+                
+                <!-- NOVO: Container para o Formulário de Cadastro de Boleto, inicialmente oculto -->
+                <div id="boletoRegistrationFormContainer" class="form-section" style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px; display: none;">
+                    <h3>Cadastrar Novo Boleto</h3>
+                    <form id="boletoForm">
+                        <div class="form-row">
+                                                                            
+                        <div class="form-group">
+                            <label for="boletoFileAttachment">Boleto <span class="required">*</span></label>
+                            <label class="boleto-file-upload-label" for="boletoFileAttachment">
+                                <i class="fas fa-file-pdf"></i>
+                                <span id="boletoFileUploadText">Anexar boleto (PDF)</span>
+                            </label>
+                            <input type="file" id="boletoFileAttachment" accept="application/pdf" required class="boleto-file-input-hidden">
+                            <div id="boletoFilePreview" style="display: none;">
+                                <div class="boleto-file-preview-inner">
+                                    <i class="fas fa-check-circle" style="color: #2e7d32; font-size: 1.2em;"></i>
+                                    <div class="boleto-file-info">
+                                        <span id="boletoFileName"></span>
+                                        <span id="boletoFileSize"></span>
+                                    </div>
+                                    <span id="boletoFileErrorMsg" style="display: none;"></span>
+                                </div>
+                            </div>
+                            <small>Obrigatório. Máximo 10MB.</small>
+                        </div>
+                        
+                            <div class="form-group">
+                                <label for="boletoVendor">Fornecedor <span class="required">*</span></label>
+                                <input type="text" id="boletoVendor" placeholder="Nome do Fornecedor" required list="boletoVendorsDatalist">
+                                <datalist id="boletoVendorsDatalist"></datalist> <!-- DATALIST AGORA AQUI -->
+                            </div>
+                            <div class="form-group">
+                                <label for="boletoProcess">Processo <span class="required">*</span></label>
+                                <input type="text" id="boletoProcess" placeholder="Ex: São Paulo" required list="processesList">
+                                <datalist id="processesList"></datalist> <!-- Este datalist é preenchido pela função populateProcessesDatalist() -->
+                            </div>
+                            <div class="form-group">
+                                <label for="boletoCompany">Empresa <span class="required">*</span></label>
+                                <select id="boletoCompany" name="boletoCompany" class="form-control" required>
+                                    <option value="">Selecione uma Empresa</option>
+                                    <!-- Opções serão preenchidas dinamicamente via JavaScript -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="boletoGenerationDate">Data de Geração <span class="required">*</span></label>
+                                <input type="date" id="boletoGenerationDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="boletoDirection">Direcionamento <span class="required">*</span></label>
+                                <select id="boletoDirection" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="Tiago">Tiago</option>
+                                    <option value="Lotérica">Lotérica</option>
+                                </select>
+                            </div>
+                        </div>
+                
+                        <div class="form-group">
+                            <label>Parcelamento <span class="required">*</span></label>
+                            <div>
+                                <input type="radio" id="singleParcel" name="parcelType" value="single" checked onchange="toggleParcelFields()">
+                                <label for="singleParcel">Uma Parcela</label>
+                                <input type="radio" id="multipleParcels" name="parcelType" value="multiple" onchange="toggleParcelFields()">
+                                <label for="multipleParcels">Múltiplas Parcelas</label>
+                            </div>
+                        </div>
+                
+                        <!-- Campos para Parcela Única -->
+                        <div id="singleParcelFields" class="form-row">
+                            <div class="form-group">
+                                <label for="singleParcelValue">Valor Total <span class="required">*</span></label>
+                                <input type="number" id="singleParcelValue" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="singleParcelDueDate">Data de Vencimento <span class="required">*</span></label>
+                                <input type="date" id="singleParcelDueDate" required>
+                            </div>
+                        </div>
+                
+                        <!-- Campos para Múltiplas Parcelas -->
+                        <div id="multipleParcelFields" style="display: none;">
+                            <p>Preencha os valores e datas de vencimento de cada parcela. As datas devem estar dentro do mês da parcela.</p>
+                            <div id="parcelasContainer">
+                                <!-- Parcelas serão adicionadas aqui via JS -->
+                            </div>
+                            <button type="button" class="btn btn-info btn-small" onclick="addParcelField()">Adicionar Parcela</button>
+                        </div>
+                
+                        <div class="form-group">
+                            <label for="boletoObservation">Observação</label>
+                            <textarea id="boletoObservation" rows="3"></textarea>
+                        </div>
+                
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-success" onclick="addBoleto()" id="addBoletoBtn">Cadastrar Boleto</button>
+                            <button type="button" class="btn btn-secondary" onclick="clearBoletoForm()">Limpar Formulário</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- NOVO BOTÃO 'Cadastrar Boleto' adicionado ao controls-container existente -->
+                <div class="controls-container" style="display: flex; justify-content: center; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap;">
+                    
+                    <!-- Botão para Cadastrar Novo Boleto -->
+                    <button id="toggleAddBoletoFormBtn" class="btn btn-success" onclick="toggleAddBoletoForm()" style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-plus"></i> Cadastrar Boleto
+                    </button>
+                    
+                    <!-- Botão Filtros (EXISTENTE) -->
+                    <button id="toggleBoletoFiltersBtn" class="btn btn-primary" onclick="toggleBoletoAdvancedFilters()" style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-filter"></i> Filtros
+                    </button>
+                    
+                    <!-- Botões de Visualização (EXISTENTE) -->
+                    <button id="showAllBoletoItemsBtn" class="btn btn-primary" onclick="toggleBoletoShowAllItems()" style="display:block;">
+                        <i class="fas fa-list-alt"></i> Mostrar Todas as Parcelas
+                    </button>
+                    <button id="hideAllBoletoItemsBtn" class="btn btn-secondary" onclick="toggleBoletoShowAllItems()" style="display:none;">
+                        <i class="fas fa-columns"></i> Voltar para Paginação (50 por página)
+                    </button>
+
+                    <!-- Controles de Paginação (EXISTENTE) -->
+                    <div id="boletoPaginationControls" class="pagination-controls" style="display: flex; align-items: center; gap: 10px;">
+                        <button id="boletoPrevPageBtn" class="btn btn-sm btn-outline-primary" onclick="boletoPrevPage()">Página Anterior</button>
+                        <span id="boletoPageInfo" style="font-weight: bold; white-space: nowrap;">Página 1 de 1</span>
+                        <button id="boletoNextPageBtn" class="btn btn-sm btn-outline-primary" onclick="boletoNextPage()">Próxima Página</button>
+                    </div>
+                </div>
+
+                <!-- Filtros Avançados e Ordenação para BOLETOS (INICIALMENTE OCULTOS) -->
+                <div id="boletoAdvancedFiltersContainer" class="filters-container" style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; display: none;">
+                    <h3 style="margin-top: 0; color: #333;">🔍 Filtros e Ordenação Avançados para Boletos</h3>
+                    
+                    <div class="filters-row">
+                        <div class="form-group">
+                            <label for="filterBoletoDirection">Direcionamento:</label>
+                            <select id="filterBoletoDirection" onchange="applyBoletoFilters()">
+                                <option value="">Todos</option>
+                                <option value="Tiago">Tiago</option>
+                                <option value="Lotérica">Lotérica</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="filterBoletoGenerationDateStart">Data Geração Início:</label>
+                            <input type="date" id="filterBoletoGenerationDateStart" onchange="applyBoletoFilters()">
+                        </div>
+                        <div class="form-group">
+                            <label for="filterBoletoGenerationDateEnd">Data Geração Fim:</label>
+                            <input type="date" id="filterBoletoGenerationDateEnd" onchange="applyBoletoFilters()">
+                        </div>
+                        <div class="form-group">
+                            <label for="filterBoletoDueDateStart">Vencimento Início:</label>
+                            <input type="date" id="filterBoletoDueDateStart" onchange="applyBoletoFilters()">
+                        </div>
+                        <div class="form-group">
+                            <label for="filterBoletoDueDateEnd">Vencimento Fim:</label>
+                            <input type="date" id="filterBoletoDueDateEnd" onchange="applyBoletoFilters()">
+                        </div>
+                    </div>
+    
+                    <div class="filters-row">
+                        <div class="form-group">
+                            <label for="filterBoletoVendor">Fornecedor:</label>
+                            <select id="filterBoletoVendor" onchange="applyBoletoFilters()">
+                                <option value="">Todos os Fornecedores</option>
+                                <!-- Opções serão preenchidas via JS -->
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="filterBoletoProcess">Processo:</label>
+                                <select id="filterBoletoProcess">
+                                    <option value="">Todos os Processos</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="searchBoletoTerm">Buscar (Outros campos):</label>
+                            <input type="text" id="searchBoletoTerm" placeholder="Observação...">
+                        </div>
+                        <div class="form-group">
+                            <label for="boletoSortBy">Ordenar por:</label>
+                            <select id="boletoSortBy" onchange="applyBoletoFilters()">
+                                <option value="dueDate_asc">Vencimento (Mais Antigo)</option>
+                                <option value="dueDate_desc">Vencimento (Mais Recente)</option>
+                                <option value="vendor">Fornecedor A-Z</option>
+                                <option value="value_desc">Valor (Maior)</option>
+                                <option value="value_asc">Valor (Menor)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Nova linha para Valor Mínimo e Máximo para manter o layout limpo -->
+                    <div class="filters-row"> 
+                         <div class="form-group">
+                            <label for="filterBoletoValueMin">Valor Parcela Mínimo:</label>
+                            <input type="number" id="filterBoletoValueMin" step="0.01" placeholder="0,00">
+                        </div>
+                        <div class="form-group">
+                            <label for="filterBoletoValueMax">Valor Parcela Máximo:</label>
+                            <input type="number" id="filterBoletoValueMax" step="0.01" placeholder="999999,99">
+                        </div>
+                    </div>
+                    <!-- Botões de Ação dos Filtros -->
+                    <div class="filters-row" style="margin-top: 15px;">
+                        <div class="form-group">
+                            <button class="btn btn-primary" onclick="applyBoletoFilters()">🔍 Aplicar Filtros</button>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-secondary" onclick="clearBoletoFilters()">  ️ Limpar Filtros</button>
+                        </div>
+                    </div>
+
+                    <!-- Botão para fechar filtros -->
+                    <div class="filters-row" style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 15px;">
+                        <div class="form-group">
+                            <button class="btn btn-outline-secondary" onclick="toggleBoletoAdvancedFilters()" style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-times"></i> Fechar Filtros
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões de Exportação -->
+                <div class="export-buttons">
+                    <button class="btn btn-success" onclick="exportBoletosToExcel()"><i class="fas fa-file-excel"></i> Exportar Excel</button>
+                    <button class="btn btn-info" onclick="exportBoletosToPDF()"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+                </div>
+                
+                <!-- Tabela de Boletos Cadastrados -->
+                <div style="overflow-x: auto;">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Fornecedor</th>
+                                <th>Parcela</th>
+                                <th>Valor Parcela</th>
+                                <th>Vencimento</th>
+                                <th>Processo</th>
+                                <th>Direcionamento</th>
+                                <th>Empresa</th>
+                                <th>Status Pagamento</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="boletosTableBody">
+                            <!-- Boletos serão listados aqui -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- FIM DA DIV boletosTab -->
+
+        </div> <!-- Fechamento de mainContent -->
+    </div> <!-- Fechamento de container -->
+    
+    <!-- Modal para Edição em Massa de Salários -->
+    <div id="bulkEditSalaryModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeBulkEditSalaryModal()">&times;</span>
+            <h2>Editar Múltiplos Salários/Auxílios</h2>
+            <div style="padding-bottom: 15px; border-bottom: 1px solid #eee; margin-bottom: 15px;">
+                <p>Você selecionou <strong id="bulkEditCount">0</strong> registro(s) para edição em massa.</p>
+                <p>Selecione um campo e insira o novo valor. Este valor será aplicado a TODOS os itens selecionados.</p>
+            </div>
+            <form id="bulkEditSalaryForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bulkEditField">Campo a Editar:</label>
+                        <select id="bulkEditField" onchange="updateBulkEditValueField()" required>
+                            <option value="">Selecione um campo...</option>
+                            <option value="type">Tipo</option>
+                            <option value="favoredName">Favorecido</option>
+                            <option value="bank">Banco</option>
+                            <option value="agency">Agência</option>
+                            <option value="account">Conta</option>
+                            <option value="operation">N° de Operação</option>
+                            <option value="process">Processo</option>
+                            <option value="value">Valor</option>
+                            <option value="month">Mês</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="bulkEditValue">Novo Valor:</label>
+                        <!-- Este input será dinâmico: text, number, select (para mês) -->
+                        <input type="text" id="bulkEditValue" placeholder="Insira o novo valor" required>
+                        <select id="bulkEditMonthSelect" style="display:none;"></select> <!-- Para edição de mês -->
+                        <input type="number" id="bulkEditYearInput" style="display:none;" placeholder="Ano (AAAA)" min="1900" max="2100">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-success" onclick="applyBulkEditSalary()">Aplicar Edição</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeBulkEditSalaryModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para pagamento -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closePaymentModal()">&times;</span>
+            <h2>Registrar Pagamento</h2>
+            
+            <!-- MUDANÇA AQUI: DE DIV PARA FORM -->
+            <form id="paymentForm"> 
+                <div class="form-group">
+                    <label for="paymentAmount">Valor do Pagamento <span class="required">*</span>:</label>
+                    <input type="number" id="paymentAmount" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="paymentDate">Data do Pagamento <span class="required">*</span>:</label>
+                    <input type="date" id="paymentDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="paymentDescription">Descrição:</label>
+                    <textarea id="paymentDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="proofOfPayment">Comprovante de Pagamento <span class="required">*</span>:</label>
+                    <input type="file" id="proofOfPayment" accept="image/*,.pdf" required>
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        * Obrigatório anexar comprovante (imagem ou PDF)
+                    </small>
+                </div>
+                <div id="partialPaymentInfo" class="partial-payment-info" style="display: none;">
+                    <strong>Atenção:</strong> Este será um pagamento parcial. A ordem permanecerá como "Pendente Pagamento" até que o valor total seja pago.
+                </div>
+                
+                <!-- O BOTÃO DEVE ESTAR DENTRO DO FORMULÁRIO -->
+                <button class="btn btn-success" type="button" id="registerPaymentBtn" style="pointer-events: auto;">Registrar Pagamento</button>    
+                
+            </form> <!-- FECHAMENTO DA TAG FORM -->
+        </div>
+    </div>
+
+    <!-- Modal para pagamento de Dado de Entrada Personalizado -->
+    <div id="customEntryPaymentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCustomEntryPaymentModal()">&times;</span>
+            <h2>Registrar Pagamento de Dado de Entrada</h2>
+            <div id="customEntryPaymentDetails" style="background: #e7f3ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <!-- Detalhes do Dado de Entrada serão carregados aqui via JS -->
+            </div>
+            
+            <form id="customEntryPaymentForm">
+                <div class="form-group">
+                    <label for="customEntryPaymentAmount"><span class="required">*</span> Valor do Pagamento:</label>
+                    <input type="number" id="customEntryPaymentAmount" step="0.01" required readonly>
+                    <small style="color: #666;">O valor é o total do Dado de Entrada e não pode ser alterado.</small>
+                </div>
+                <div class="form-group">
+                    <label for="customEntryPaymentDate"><span class="required">*</span> Data do Pagamento:</label>
+                    <input type="date" id="customEntryPaymentDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="customEntryProofFile"><span class="required">*</span> Comprovante de Pagamento:</label>
+                    <input type="file" id="customEntryProofFile" accept=".pdf,.jpg,.jpeg,.png" required>
+                    <small style="color: #666;">Formatos aceitos: PDF, JPG, JPEG, PNG (máx. 30MB)</small>
+                </div>
+                <div class="form-group">
+                    <label for="customEntryPaymentObservation">Observação (opcional):</label>
+                    <textarea id="customEntryPaymentObservation" rows="3" placeholder="Observações sobre o pagamento..."></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" id="confirmCustomEntryPaymentBtn" class="btn btn-success">
+                        💰 Confirmar Pagamento
+                    </button>
+                    <button type="button" onclick="closeCustomEntryPaymentModal()" class="btn btn-secondary">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal para editar ordem -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>Editar Ordem de Pagamento</h2>
+            <div id="editForm">
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar salário -->
+    <div id="editSalaryModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditSalaryModal()">&times;</span>
+            <h2>Editar Salário/Auxílio</h2>
+            <div id="editSalaryForm">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para visualizar detalhes da ordem -->
+    <div id="orderModal" class="modal">
+        <div class="modal-content">
+            <!-- O conteúdo gerado pela função viewOrder será inserido aqui -->
+            <div id="orderDetails"></div>
+        </div>
+    </div>   
+    
+    <!-- START: Modal genérico para visualização de detalhes de qualquer item pago -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content details-modal-content">
+            <span class="close" onclick="document.getElementById('detailsModal').style.display='none'">&times;</span>
+            <div class="modal-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-info icon-primary">
+                    <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <h2 id="detailsModalTitle">Detalhes</h2>
+            </div>
+            <div id="detailsModalContent">
+                <!-- Conteúdo dinâmico (HTML gerado por JavaScript) será carregado aqui -->
+            </div>
+        </div>
+    </div>
+    <!-- END: Modal genérico para visualização de detalhes de qualquer item pago -->
+    
+<!-- Scripts de Integração WhatsApp -->
+<!-- whatsapp-config.js pode vir primeiro, pois define WHATSAPP_CONFIG -->
+<script src="whatsapp-config.js" defer></script>
+
+<!-- Script Principal do Sistema (AGORA CARREGADO MAIS CEDO) -->
+<script src="script.js" defer></script> 
+
+<!-- Outros scripts que dependem de funções definidas em script.js -->
+<script src="whatsapp-integration.js" defer></script>
+<script src="wscheduler.js" defer></script>
+
+</body>
+</html>
