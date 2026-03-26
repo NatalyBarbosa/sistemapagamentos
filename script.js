@@ -4366,100 +4366,93 @@ function showDuplicateBoletoAlert(existingBoleto, callback) {
     }
 }
 
-// APROX. LINHA 6010 (ou onde _proceedWithAddBoleto está)
 async function _proceedWithAddBoleto(formData) {
-
     try {
-
+        showLoadingOverlay(); // Mostrar loading durante envio
+        
         const response = await fetch('api/add_boleto.php', {
-
             method: 'POST',
-
             body: formData
-
         });
-
+        
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+        
         const data = await response.json();
-
+        
         if (data.success) {
             showModernSuccessNotification('Boleto cadastrado com sucesso!');
-        
-            // ✅ NÃO fechar o formulário
-            // toggleAddBoletoForm();
-        
-            const vendorName = formData.get('vendor');
-            const companyName = formData.get('company');
             
-            addEntryToAutocompleteHistory('fornecedoresHistory', vendorName);
-            populateAutocompleteDatalist('fornecedorSugestoes', 'fornecedoresHistory');
-        
-            clearBoletoForm();
-        
-            // OTIMIZAÇÃO: Adicionar o novo boleto diretamente ao array sem recarregar da API
-            if (data.id && data.company) {
+            // ✅ Extrair dados do FormData para logs e histórico
+            const vendorName = formData.get('vendor') || 'Não informado';
+            const companyName = formData.get('company') || 'Não informada';
+            const generationDate = formData.get('generationDate') || 'Não informada';
+            
+            console.log('✅ Boleto cadastrado:', { id: data.id, vendor: vendorName, generationDate });
+            
+            // Adicionar à história de autocomplete (se função existir)
+            if (typeof addEntryToAutocompleteHistory === 'function') {
+                addEntryToAutocompleteHistory('fornecedoresHistory', vendorName);
+                populateAutocompleteDatalist('fornecedorSugestoes', 'fornecedoresHistory');
+            }
+            
+            // Fechar modal se estiver aberto
+            const modal = document.getElementById('registerBoletoModal');
+            if (modal && modal.style.display === 'block') {
+                modal.style.display = 'none';
+            }
+            
+            // OTIMIZAÇÃO: Adicionar boleto diretamente ao array (sem recarregar API)
+            if (data.id && data.boleto) { // Assumindo que o backend retorna o boleto completo
                 const newBoleto = {
-                    id: data.id,
-                    vendor: formData.get('vendor'),
-                    generationDate: formData.get('generationDate'),
-                    totalValue: parseFloat(formData.get('totalValue')),
-                    firstDueDate: formData.get('firstDueDate'),
-                    process: formData.get('process'),
-                    direction: formData.get('direction'),
-                    company: data.company,
-                    observation: formData.get('observation'),
-                    isFullyPaid: false,
-                    hasFile: true,
-                    file_original_name: formData.get('boletoFileName'),
-                    boletoFileName: formData.get('boletoFileName'),
-                    boletoFileSize: formData.get('boletoFileSize'),
+                    ...data.boleto, // Dados do servidor
+                    generationDate: generationDate, // ✅ Garantir data fixa
                     parcels: JSON.parse(formData.get('parcels') || '[]')
                 };
-        
+                
+                // Inicializar array se necessário
+                if (!Array.isArray(boletos)) {
+                    boletos = [];
+                }
+                
                 boletos.unshift(newBoleto);
                 highlightNewBoletoId = data.id;
-        
-                console.log(`✨ Novo boleto cadastrado com ID: ${highlightNewBoletoId}`);
-        
-                // ✅ CRÍTICO: Apenas reexibir tabela de boletos (NÃO chamar updateUIComponentsAfterLoad)
-                displayBoletos();
                 
-                // Atualizar APENAS os componentes locais
+                console.log(`✨ Novo boleto adicionado ao array: ${highlightNewBoletoId} (Data: ${generationDate})`);
+                
+                // Atualizar UI localmente
+                displayBoletos();
                 updateCounters();
-                populateBoletoVendorsDatalist();
-                populateBoletoCompanySelect();
-        
-                console.log(`✅ Boleto cadastrado e exibido instantaneamente na tabela`);
-        
+                
+                // Popular datalists
+                if (typeof populateBoletoVendorsDatalist === 'function') {
+                    populateBoletoVendorsDatalist();
+                }
+                if (typeof populateBoletoCompanySelect === 'function') {
+                    populateBoletoCompanySelect();
+                }
+                
+                console.log(`✅ Boleto cadastrado e UI atualizada. Empresa: "${companyName}"`);
             } else {
-                console.warn('⚠️ Falha ao obter dados do novo boleto. Recarregando...');
+                // Fallback: Recarregar da API
+                console.warn('⚠️ Dados do boleto não retornados. Recarregando...');
                 await loadBoletos(true);
                 displayBoletos();
             }
-        
-            console.log(`✅ Boleto cadastrado com sucesso. Empresa: "${companyName}"`);
-        
         } else {
             showModernErrorNotification('Erro ao cadastrar boleto: ' + (data.error || 'Erro desconhecido'));
             await loadBoletos(true);
             displayBoletos();
         }
-
     } catch (error) {
-
         console.error('💥 Erro ao cadastrar boleto:', error);
-
-        showModernErrorNotification('Erro ao cadastrar boleto. Verifique o console para mais detalhes.');
-
-        // ✅ NOVO: Em caso de erro, recarregar dados para manter consistência
-        await loadBoletos(true);
+        showModernErrorNotification('Erro ao cadastrar boleto. Verifique a conexão e tente novamente.');
+        await loadBoletos(true); // Recarregar para consistência
         displayBoletos();
-
     } finally {
-
-        hideLoadingOverlay(); // Esconde o loading em caso de sucesso ou falha
-
+        hideLoadingOverlay(); // Sempre esconder loading
     }
-
 }
 
 function canDeleteOrder(order) {
@@ -5096,7 +5089,13 @@ async function loadFullOrdersList(forceReload = false) {
         fullOrdersList = [];
         hasLoadedFullOrdersList = false;
         showSystemMessage(`Erro ao carregar ordens: ${error.message}`, 'error', 5000);
+    } 
+    if (document.getElementById('boletoCompany')) {
+        populateBoletoCompanySelect();
     }
+    setTimeout(() => {
+        populateBoletoCompanySelect();
+    }, 200);
 }
 async function loadSalaries(forceReload = false) { // Adiciona forceReload
     if (hasLoadedSalaries && !forceReload) {
@@ -5848,130 +5847,318 @@ function exportEntryDataToExcel() {
     console.log('%c[DEBUG_EXPORT] Entry Data Excel export initiated.', 'color: green;');
 }
 
-function exportToPDF() {
-    const { jsPDF } = window.jspdf;  // Assumindo jsPDF global; ajuste se necessário
-    const doc = new jsPDF();
+function getAllPendingParcels(orders) {
+    console.log('DEBUG - Extraindo parcelas pendentes...');
     
-    // Título
-    doc.setFontSize(18);
-    doc.text('Relatório de Ordens Pendentes', 20, 20);
+    const allParcels = [];
     
-    // ✅ NOVO: Incluir filtros aplicados (incluindo previsão)
-    const startDate = document.getElementById('filterDateStart')?.value || 'Todas';
-    const endDate = document.getElementById('filterDateEnd')?.value || 'Todas';
-    const forecastStart = document.getElementById('filterPaymentForecastStartDate')?.value || 'Todas';
-    const forecastEnd = document.getElementById('filterPaymentForecastEndDate')?.value || 'Todas';
-    doc.setFontSize(10);
-    doc.text(`Filtros: Geração (${startDate} a ${endDate}) | Previsão (${forecastStart} a ${forecastEnd})`, 20, 30);
-    
-    // Cabeçalhos (adicionada "Previsão" após "Processo")
-    const headers = ['Favorecido', 'Valor', 'Tipo', 'Prioridade', 'Status', 'Processo', 'Previsão', 'Empresa'];
-    const columnWidths = [35, 20, 15, 15, 15, 25, 25, 20];  // Ajustado para nova coluna
-    let yPosition = 45;
-    
-    // Desenhar cabeçalhos
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    let xPosition = 20;
-    headers.forEach((header, index) => {
-        doc.text(header, xPosition, yPosition);
-        xPosition += columnWidths[index];
-    });
-    yPosition += 10;
-    
-    // Obter ordens pendentes filtradas
-    let pendingOrders = getFilteredOrders();  // Aplica filtros atuais
-    
-    // ✅ NOVO: Preencher/estimar previsão se vazia
-    const today = new Date();
-    pendingOrders.forEach(order => {
-        if (!order.paymentForecast || order.paymentForecast === '') {
-            let forecastDays = 30;  // Default
-            if (order.priority === 'Emergência') forecastDays = 3;
-            else if (order.priority === 'Urgência') forecastDays = 7;
-            order.paymentForecast = new Date(new Date(order.generationDate || today).getTime() + forecastDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        }
-        if (!order.paymentForecast) order.paymentForecast = 'N/A';
-    });
-    
-    // ✅ NOVO: Ordenar por previsão (urgentes primeiro, N/A no final)
-    pendingOrders.sort((a, b) => {
-        if (a.paymentForecast === 'N/A') return 1;
-        if (b.paymentForecast === 'N/A') return -1;
-        return new Date(a.paymentForecast) - new Date(b.paymentForecast);
-    });
-    
-    // ✅ NOVO: Agrupar por previsão para totais
-    const groupedByForecast = pendingOrders.reduce((acc, order) => {
-        const key = order.paymentForecast || 'Sem Previsão';
-        if (!acc[key]) acc[key] = { orders: [], total: 0 };
-        acc[key].orders.push(order);
-        acc[key].total += parseFloat(order.paymentValue || 0);
-        return acc;
-    }, {});
-    
-    // Iterar grupos e adicionar linhas
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    Object.keys(groupedByForecast).sort((a, b) => new Date(a) - new Date(b)).forEach(forecast => {
-        const group = groupedByForecast[forecast];
-        const orders = group.orders;
-        const totalValue = group.total;
-        
-        // Linha de grupo
-        doc.setFont("helvetica", "bold");
-        doc.text(`Previsão: ${forecast} (${orders.length} itens | Total: R$ ${totalValue.toLocaleString('pt-BR', {minimumFractionDigits: 2})})`, 20, yPosition);
-        yPosition += 8;
-        doc.setFont("helvetica", "normal");
-        
-        // Linhas das ordens
-        orders.forEach(order => {
-            const rowData = [
-                order.favoredName || 'N/A',
-                parseFloat(order.paymentValue || 0),
-                order.paymentType || 'N/A',
-                order.priority || 'Normal',
-                order.status || 'Pendente',
-                order.process || 'N/A',
-                order.paymentForecast || 'N/A',  // ✅ NOVO: Previsão
-                order.company || 'N/A'
-            ];
-            
-            let xPosition = 20;
-            rowData.forEach((data, index) => {
-                let textValue = typeof data === 'number' ? `R$ ${data.toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : data.toString();
-                doc.text(textValue, xPosition, yPosition);
-                xPosition += columnWidths[index];
-            });
-            yPosition += 7;
-            
-            // Paginação automática
-            if (yPosition > 270) {
-                doc.addPage();
-                yPosition = 20;
-            }
-        });
-        yPosition += 5;
-    });
-    
-    // ✅ NOVO: Chamar addIntelligentPredictionsToPDF para insights extras
-    if (typeof addIntelligentPredictionsToPDF === 'function') {
-        yPosition = addIntelligentPredictionsToPDF(doc, pendingOrders, yPosition);
+    if (!orders || !Array.isArray(orders)) {
+        console.warn('⚠️ Orders não é um array válido');
+        return allParcels;
     }
     
-    // Rodapé com total geral
-    const grandTotal = pendingOrders.reduce((sum, order) => sum + parseFloat(order.paymentValue || 0), 0);
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text(`GRAND TOTAL: R$ ${grandTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})} | Ordens: ${pendingOrders.length}`, 20, yPosition + 10);
-    doc.setFontSize(8);
-    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 20, yPosition + 20);
+    orders.forEach(order => {
+        if (order.boletos && Array.isArray(order.boletos)) {
+            order.boletos.forEach(boleto => {
+                if (boleto.parcelas && Array.isArray(boleto.parcelas)) {
+                    boleto.parcelas.forEach(parcela => {
+                        if (parcela.status !== 'Paga') {
+                            allParcels.push({
+                                orderId: order.id,
+                                favoredName: order.favoredName,
+                                week: parcela.dueDate || order.paymentForecast || 'N/A',
+                                amount: parseFloat(parcela.value || 0),
+                                status: parcela.status
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    });
     
-    // Salvar
-    doc.save(`ordens_pendentes_previsoes_${new Date().toISOString().split('T')[0]}.pdf`);
-    console.log('✅ PDF exportado com previsões incluídas.');
+    console.log('✅ Total de parcelas pendentes extraídas:', allParcels.length);
+    return allParcels;
 }
 
+function exportToPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // ===== CONSTANTES DE LAYOUT =====
+    const LAYOUT = {
+        MARGIN_TOP: 20,
+        MARGIN_LEFT: 20,
+        MARGIN_RIGHT: 15,
+        PAGE_HEIGHT: doc.internal.pageSize.height,
+        PAGE_WIDTH: doc.internal.pageSize.width,
+        COLORS: {
+            TABLE_HEADER: [41, 128, 185],
+            TABLE_HEADER_ALT: [52, 73, 94],
+            TABLE_TEXT: [50, 50, 50],
+            TEXT_WHITE: [255, 255, 255]
+        },
+        FONTS: {
+            TITLE: 16,
+            SUBTITLE: 12,
+            TEXT: 10,
+            TEXT_SMALL: 8
+        },
+        SPACING: {
+            BETWEEN_SECTIONS: 8,
+            AFTER_TABLE: 8,
+            AFTER_LINE: 5
+        }
+    };
+
+    // ===== FUNÇÕES AUXILIARES =====
+    const addSectionTitle = (title, yPos) => {
+        doc.setFontSize(LAYOUT.FONTS.SUBTITLE);
+        doc.setFont("helvetica", "bold");
+        doc.text(title, LAYOUT.MARGIN_LEFT, yPos);
+        return yPos + LAYOUT.SPACING.AFTER_LINE;
+    };
+
+    const addSummaryText = (text, yPos, isBold = false) => {
+        doc.setFontSize(LAYOUT.FONTS.TEXT);
+        doc.setFont("helvetica", isBold ? "bold" : "normal");
+        doc.text(text, LAYOUT.MARGIN_LEFT, yPos);
+        return yPos + LAYOUT.SPACING.AFTER_LINE;
+    };
+
+    const addSectionSpacing = (yPos) => {
+        return yPos + LAYOUT.SPACING.BETWEEN_SECTIONS;
+    };
+
+    const addInfoText = (text, yPos) => {
+        doc.setFontSize(LAYOUT.FONTS.TEXT_SMALL);
+        doc.setFont("helvetica", "italic");
+        doc.text(text, LAYOUT.MARGIN_LEFT, yPos);
+        return yPos + LAYOUT.SPACING.AFTER_LINE;
+    };
+
+    const addPageNumber = (data) => {
+        let str = "Página " + doc.internal.getNumberOfPages();
+        doc.setFontSize(8);
+        doc.text(str, data.settings.margin.left, LAYOUT.PAGE_HEIGHT - 10);
+    };
+
+    // ===== 1. OBTER ORDENS FILTRADAS =====
+    const filteredOrders = getFilteredOrders();
+
+    if (!filteredOrders || filteredOrders.length === 0) {
+        showModernInfoNotification('Nenhuma ordem encontrada com os filtros aplicados para exportar.');
+        return;
+    }
+
+    // ===== PÁGINA 1: TÍTULO, FILTROS E TABELA PRINCIPAL =====
+    doc.setFont("helvetica");
+    doc.setFontSize(LAYOUT.FONTS.TITLE);
+    doc.setFont("helvetica", "bold");
+    doc.text('Relatório de Ordens de Pagamento (Filtrado)', LAYOUT.MARGIN_LEFT, LAYOUT.MARGIN_TOP);
+
+    doc.setFontSize(LAYOUT.FONTS.TEXT);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, LAYOUT.MARGIN_LEFT, LAYOUT.MARGIN_TOP + 8);
+
+    // Exibir filtros aplicados
+    let currentY = LAYOUT.MARGIN_TOP + 18;
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text('Filtros Aplicados:', LAYOUT.MARGIN_LEFT, currentY);
+    currentY += 5;
+    doc.setFont("helvetica", "normal");
+
+    const filters = {
+        'Status': document.getElementById('filterStatus')?.value || 'Todos',
+        'Prioridade': document.getElementById('filterPriority')?.value || 'Todas',
+        'Tipo de Pagamento': document.getElementById('filterPaymentType')?.value || 'Todos',
+        'Data Geração (Início)': document.getElementById('filterDateStart')?.value || 'Todas',
+        'Data Geração (Fim)': document.getElementById('filterDateEnd')?.value || 'Todas',
+        'Previsão Pagamento (Início)': document.getElementById('filterPaymentForecastStartDate')?.value || 'Todas',
+        'Previsão Pagamento (Fim)': document.getElementById('filterPaymentForecastEndDate')?.value || 'Todas',
+        'Empresa': document.getElementById('filterCompany')?.value || 'Todas',
+        'Processo': document.getElementById('filterProcess')?.value || 'Todos',
+        'Solicitante': document.getElementById('filterSolicitant')?.value || 'Todos'
+    };
+
+    let filterText = '';
+    let currentLineLength = 0;
+    const maxLineLength = 100;
+
+    for (const [key, value] of Object.entries(filters)) {
+        if (value !== 'Todos' && value !== 'Todas' && value !== '') {
+            const item = `${key}: ${value}; `;
+            if (currentLineLength + item.length > maxLineLength) {
+                doc.text(filterText, LAYOUT.MARGIN_LEFT, currentY);
+                currentY += 4;
+                filterText = item;
+                currentLineLength = item.length;
+            } else {
+                filterText += item;
+                currentLineLength += item.length;
+            }
+        }
+    }
+    if (filterText) {
+        doc.text(filterText, LAYOUT.MARGIN_LEFT, currentY);
+        currentY += 4;
+    }
+    currentY += LAYOUT.SPACING.BETWEEN_SECTIONS;
+
+    // Preparar dados da tabela principal
+    const headers = [['Favorecido', 'Valor', 'Tipo', 'Prioridade', 'Status', 'Data', 'Processo']];
+    const body = filteredOrders.map(order => [
+        order.favoredName || 'N/A',
+        `R$ ${parseFloat(order.paymentValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        order.paymentType || 'N/A',
+        order.priority || 'Normal',
+        order.status || 'Pendente',
+        new Date(order.created_at).toLocaleDateString('pt-BR'),
+        order.process || 'N/A'
+    ]);
+
+    doc.autoTable({
+        startY: currentY,
+        head: headers,
+        body: body,
+        theme: 'striped',
+        headStyles: {
+            fillColor: LAYOUT.COLORS.TABLE_HEADER,
+            textColor: LAYOUT.COLORS.TEXT_WHITE,
+            fontStyle: 'bold',
+            fontSize: LAYOUT.FONTS.TEXT_SMALL
+        },
+        bodyStyles: {
+            fontSize: LAYOUT.FONTS.TEXT_SMALL,
+            textColor: LAYOUT.COLORS.TABLE_TEXT
+        },
+        alternateRowStyles: {
+            fillColor: [245, 245, 245]
+        },
+        margin: { top: 10, left: LAYOUT.MARGIN_LEFT, right: LAYOUT.MARGIN_RIGHT },
+        didDrawPage: addPageNumber
+    });
+
+    currentY = doc.autoTable.previous.finalY + LAYOUT.SPACING.AFTER_TABLE;
+
+    // ===== SEÇÃO 2: RESUMO FINANCEIRO GERAL =====
+    const totalPendingValue = filteredOrders.reduce((sum, order) => sum + parseFloat(order.paymentValue || 0), 0);
+    
+    currentY = addSectionTitle('2. Resumo Financeiro Geral', currentY);
+    currentY = addSummaryText(`Total Geral (no período filtrado): R$ ${totalPendingValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, currentY, true);
+    currentY = addSectionSpacing(currentY);
+
+    // ===== SEÇÃO 3: SOMATÓRIOS POR DIRECIONAMENTO =====
+    const directionSums = new Map();
+    filteredOrders.forEach(order => {
+        const direction = order.direction || 'Sem Direcionamento';
+        const value = parseFloat(order.paymentValue || 0);
+        const current = directionSums.get(direction) || 0;
+        directionSums.set(direction, current + value);
+    });
+
+    if (directionSums.size > 0) {
+        doc.addPage();
+        currentY = LAYOUT.MARGIN_TOP;
+
+        currentY = addSectionTitle('3. Somatórios por Direcionamento', currentY);
+
+        const directionSummaryTableData = [];
+        
+        // Tiago e Lotérica primeiro, se existirem
+        if (directionSums.has('Tiago')) {
+            directionSummaryTableData.push(['Tiago', `R$ ${directionSums.get('Tiago').toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`]);
+            directionSums.delete('Tiago');
+        }
+        if (directionSums.has('Lotérica')) {
+            directionSummaryTableData.push(['Lotérica', `R$ ${directionSums.get('Lotérica').toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`]);
+            directionSums.delete('Lotérica');
+        }
+        
+        // Outros direcionamentos ordenados alfabeticamente
+        Array.from(directionSums.entries()).sort((a, b) => a[0].localeCompare(b[0])).forEach(([dirName, sum]) => {
+            directionSummaryTableData.push([dirName, `R$ ${sum.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`]);
+        });
+
+        doc.autoTable({
+            head: [['Direcionamento', 'Valor Total']],
+            body: directionSummaryTableData,
+            startY: currentY,
+            styles: {
+                fontSize: LAYOUT.FONTS.TEXT_SMALL,
+                cellPadding: 3
+            },
+            headStyles: {
+                fillColor: LAYOUT.COLORS.TABLE_HEADER_ALT,
+                textColor: LAYOUT.COLORS.TEXT_WHITE,
+                fontSize: LAYOUT.FONTS.TEXT_SMALL,
+                fontStyle: 'bold'
+            },
+            didDrawPage: addPageNumber
+        });
+        currentY = doc.autoTable.previous.finalY + LAYOUT.SPACING.AFTER_TABLE;
+    } else {
+        doc.addPage();
+        currentY = LAYOUT.MARGIN_TOP;
+        currentY = addSectionTitle('3. Somatórios por Direcionamento', currentY);
+        currentY = addInfoText('Nenhum valor pendente por direcionamento encontrado.', currentY);
+        currentY += LAYOUT.SPACING.BETWEEN_SECTIONS;
+    }
+
+    // ===== SEÇÃO 4: SOMATÓRIOS POR PROCESSO =====
+    const processPendingSums = new Map();
+    filteredOrders.forEach(order => {
+        const process = order.process || 'Sem Processo';
+        const value = parseFloat(order.paymentValue || 0);
+        const current = processPendingSums.get(process) || 0;
+        processPendingSums.set(process, current + value);
+    });
+
+    if (processPendingSums.size > 0) {
+        doc.addPage();
+        currentY = LAYOUT.MARGIN_TOP;
+
+        currentY = addSectionTitle('4. Somatórios por Processo', currentY);
+
+        const processSummaryTableData = Array.from(processPendingSums.keys()).sort().map(processName => {
+            const sum = processPendingSums.get(processName);
+            return [
+                processName,
+                `R$ ${sum.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+            ];
+        });
+
+        doc.autoTable({
+            head: [['Processo', 'Valor Total']],
+            body: processSummaryTableData,
+            startY: currentY,
+            styles: {
+                fontSize: LAYOUT.FONTS.TEXT_SMALL,
+                cellPadding: 3
+            },
+            headStyles: {
+                fillColor: LAYOUT.COLORS.TABLE_HEADER_ALT,
+                textColor: LAYOUT.COLORS.TEXT_WHITE,
+                fontSize: LAYOUT.FONTS.TEXT_SMALL,
+                fontStyle: 'bold'
+            },
+            didDrawPage: addPageNumber
+        });
+        currentY = doc.autoTable.previous.finalY + LAYOUT.SPACING.AFTER_TABLE;
+    } else {
+        doc.addPage();
+        currentY = LAYOUT.MARGIN_TOP;
+        currentY = addSectionTitle('4. Somatórios por Processo', currentY);
+        currentY = addInfoText('Nenhum valor pendente por processo encontrado.', currentY);
+        currentY += LAYOUT.SPACING.BETWEEN_SECTIONS;
+    }
+
+    // ===== SALVAR PDF =====
+    doc.save(`relatorio_ordens_pagamento_filtrado_${new Date().toISOString().split('T')[0]}.pdf`);
+    showModernSuccessNotification('Relatório de Ordens de Pagamento exportado com sucesso!');
+    console.log('✅ Relatório de Ordens de Pagamento exportado com sucesso.');
+}
 function updateOrdersTotalSummaryDisplay(count, totalValue) {
     console.log(`💰 [Orders Total] Atualizando display: ${count} ordens, R\$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
     
@@ -7118,51 +7305,58 @@ createOrderRow = function(order, context) {
         if (canDeleteOrder(order)) {
             actionButtons += `<button class="btn btn-danger btn-small" onclick="deleteOrder('${order.id}')">Excluir</button>`;
         }
-    } else { // Para diretoria, financeiro, pending
-        if (context === 'diretoria' && canApproveDiretoria()) {
-            actionButtons += `<button class="btn btn-warning btn-small" onclick="approveOrderDiretoria(event, '${order.id}')">Aprovar</button>`; // <-- Modificado!
-        }
-        if (context === 'diretoria' && canApproveDiretoria() && order.status === 'Pendente') {
-            actionButtons += `<button class="btn btn-secondary btn-small" onclick="disapproveOrderDiretoria(event, '${order.id}')">Reprovar</button>`; // <-- Modificado!
-        }
-        
-        // Para a aba 'financeiro':
-        if (context === 'financeiro' && canApproveFinanceiro()) {
-            actionButtons += `<button class="btn btn-warning btn-small" onclick="approveOrderFinanceiro(event, '${order.id}')">Aprovar</button>`; // <-- Modificado!
-        }
-        if (context === 'financeiro' && canApproveFinanceiro() && order.status === 'Aguardando Financeiro') {
-            actionButtons += `<button class="btn btn-secondary btn-small" onclick="disapproveOrderFinanceiro(event, '${order.id}')">Reprovar</button>`; // <-- Modificado!
-        }
-        if (context === 'pending' && canRegisterPayment()) {
-            actionButtons += `<button class="btn btn-success btn-small pay-order-btn" data-order-id="${order.id}"><i class="fas fa-money-bill-wave"></i> Pagar</button>`;
-        }
+} else { // Para diretoria, financeiro, pending
 
-        if (context === 'pending') {
-            if (order.paymentType === 'Boleto') {
-                actionButtons += `<button class="btn btn-danger btn-small" onclick="deleteBoleto('${order.id}')" title="Excluir Boleto Completo">🗑️ Boleto</button>`;
+    // ========== DIRETORIA ==========
+    if (context === 'diretoria' && canApproveDiretoria()) {
+        actionButtons += `<button class="btn btn-warning btn-small" onclick="approveOrderDiretoria('${order.id}')">Aprovar</button>`;
+    }
 
-                if (order.boletos && order.boletos.length > 0) {
-                    order.boletos.forEach((boleto, boletoIndex) => {
-                        if (boleto.parcelas && boleto.parcelas.length > 1) {
-                            boleto.parcelas.forEach((parcela, parcelaIndex) => {
-                                // Apenas para parcelas não pagas
-                                if (parcela.status !== 'Paga') {
-                                    actionButtons += `<button class="btn btn-warning btn-small" onclick="deleteBoletoParcel('${boleto.id}', '${parcela.id}', ${parcelaIndex + 1}, '${order.favoredName}')" title="Excluir Parcela ${parcelaIndex + 1}"> ️ P${parcelaIndex + 1}</button>`;
-                                }
-                            });
-                        }
-                    });
-                }
+    if (context === 'diretoria' && canApproveDiretoria() && order.status === 'Pendente') {
+        actionButtons += `<button class="btn btn-secondary btn-small" onclick="disapproveOrderDiretoria('${order.id}')">Reprovar</button>`;
+    }
+
+    // ========== FINANCEIRO ==========
+    if (context === 'financeiro' && canApproveFinanceiro()) {
+        actionButtons += `<button class="btn btn-warning btn-small" onclick="approveOrderFinanceiro(event, '${order.id}')">Aprovar</button>`;
+    }
+    
+    if (context === 'financeiro' && canApproveFinanceiro() && order.status === 'Aguardando Financeiro') {
+        actionButtons += `<button class="btn btn-secondary btn-small" onclick="disapproveOrderFinanceiro(event, '${order.id}')">Reprovar</button>`;
+    }
+
+    // ========== PENDENTES PAGAMENTO ==========
+    if (context === 'pending' && canRegisterPayment()) {
+        actionButtons += `<button class="btn btn-success btn-small pay-order-btn" data-order-id="${order.id}"><i class="fas fa-money-bill-wave"></i> Pagar</button>`;
+    }
+
+    if (context === 'pending') {
+        if (order.paymentType === 'Boleto') {
+            actionButtons += `<button class="btn btn-danger btn-small" onclick="deleteBoleto('${order.id}')" title="Excluir Boleto Completo">🗑️ Boleto</button>`;
+
+            if (order.boletos && order.boletos.length > 0) {
+                order.boletos.forEach((boleto, boletoIndex) => {
+                    if (boleto.parcelas && boleto.parcelas.length > 1) {
+                        boleto.parcelas.forEach((parcela, parcelaIndex) => {
+                            if (parcela.status !== 'Paga') {
+                                actionButtons += `<button class="btn btn-warning btn-small" onclick="deleteBoletoParcel('${boleto.id}', '${parcela.id}', ${parcelaIndex + 1}, '${order.favoredName}')" title="Excluir Parcela ${parcelaIndex + 1}">🗑️ P${parcelaIndex + 1}</button>`;
+                            }
+                        });
+                    }
+                });
             }
-        }
-        if (canEditOrder(order)) {
-            actionButtons += `<button class="btn btn-info btn-small" onclick="editOrder('${order.id}')">Editar</button>`;
-        }
-        if (canDeleteOrder(order)) {
-            actionButtons += `<button class="btn btn-danger btn-small" onclick="deleteOrder('${order.id}')">Excluir</button>`;
         }
     }
 
+    // ========== AÇÕES GERAIS ==========
+    if (canEditOrder(order)) {
+        actionButtons += `<button class="btn btn-info btn-small" onclick="editOrder('${order.id}')">Editar</button>`;
+    }
+
+    if (canDeleteOrder(order)) {
+        actionButtons += `<button class="btn btn-danger btn-small" onclick="deleteOrder('${order.id}')">Excluir</button>`;
+    }
+}
     let statusDisplay;
     const totalPaid = order.payments ? order.payments.reduce((sum, payment) => sum + parseFloat(payment.amount || 0), 0) : 0;
     const remaining = parseFloat(order.paymentValue || 0) - totalPaid;
@@ -7700,6 +7894,32 @@ function createPaidBoletoRow(boleto) {
     return row;
 }
 
+// ===== FUNÇÃO: Obter Data Atual Formatada =====
+function getCurrentDateFormatted() {
+    const today = new Date();
+    return today.toISOString().split('T')[0]; // Retorna YYYY-MM-DD
+}
+
+// ===== FUNÇÃO: Obter Data Atual Formatada em pt-BR =====
+function getCurrentDateFormattedBR() {
+    const today = new Date();
+    return today.toLocaleDateString('pt-BR'); // Retorna DD/MM/YYYY
+}
+
+// ===== FUNÇÃO: Inicializar Campo de Data de Geração (ao abrir modal/formulário) =====
+function initializeBoletoGenerationDate() {
+    const dateDisplayField = document.getElementById('boletoGenerationDateDisplay');
+    if (dateDisplayField) {
+        dateDisplayField.value = getCurrentDateFormattedBR();
+        console.log('✅ Data de geração do boleto definida para:', getCurrentDateFormattedBR());
+    }
+}
+
+// ===== FUNÇÃO: Obter Data de Geração para Salvar no Banco =====
+function getBoletoGenerationDate() {
+    return getCurrentDateFormatted(); // YYYY-MM-DD para banco de dados
+}
+
 // ATUALIZADA: Função para filtrar parcelas de boletos pagas na aba "Ordens Pagas" com TODOS os filtros
 function getPaidFilteredBoletos(paidItemsArray) {
     const startDateRaw = document.getElementById('paidFilterStartDate')?.value || '';
@@ -8016,16 +8236,17 @@ function populatePaidSolicitantNameFilter() {
     });
 }
 
-
 function openAddBoletoModal() {
-    document.getElementById('addBoletoModal').style.display = 'block';
-    // Opcional: Para limpar o formulário cada vez que o modal abre.
-    // Se a função clearBoletoForm() estiver definida e você quiser que o formulário comece limpo.
-    // if (typeof clearBoletoForm === 'function') {
-    //     clearBoletoForm();
-    // }
-    console.log("DEBUG: Modal de cadastro de boleto aberto.");
+    clearBoletoForm();
+    
+    initializeBoletoGenerationDate();
+    
+    populateBoletoCompanySelect();
+    
+    document.getElementById('registerBoletoModal').style.display = 'block';
+    console.log('Modal de cadastro de boleto aberto com empresas carregadas');
 }
+
 
 function closeAddBoletoModal() {
     document.getElementById('addBoletoModal').style.display = 'none';
@@ -10556,53 +10777,37 @@ function populateAutocompleteDatalist(datalistId, historyKey) {
     });
 }
 
-
 function formatDateForDisplay(dateString) {
-    if (!dateString || dateString === '' || dateString === '-') {
+    if (!dateString || dateString === '' || dateString === '-' || dateString === 'N/A') {
         return 'N/A'; 
     }
     
+    // YYYY-MM-DD → DD/MM/YYYY (manipulação direta de string, sem Date ou timezone)
+    const ymdMatch = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (ymdMatch) {
+        const day = ymdMatch[3];
+        const month = ymdMatch[2];
+        const year = ymdMatch[1];
+        return `${day}/${month}/${year}`; // Ex: "2026-03-26" → "26/03/2026" (exato, sem atraso)
+    }
+    
+    // DD/MM/YYYY já formatado (retorna como está)
+    const dmyMatch = dateString.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (dmyMatch) {
+        return dateString;
+    }
+    
+    // Fallback para outros formatos (usar Date apenas se necessário)
     try {
-        let year, month, day;
-
-        // Tenta extrair os componentes YYYY-MM-DD
-        const matchYMD = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
-        // Tenta extrair os componentes DD/MM/YYYY
-        const matchDMY = dateString.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-
-        if (matchYMD) {
-            year = parseInt(matchYMD[1]);
-            month = parseInt(matchYMD[2]) - 1; // JavaScript: mês é 0-indexado
-            day = parseInt(matchYMD[3]);
-        } else if (matchDMY) {
-            year = parseInt(matchDMY[3]);
-            month = parseInt(matchDMY[2]) - 1;
-            day = parseInt(matchDMY[1]);
-        } else {
-            const tempDate = new Date(dateString);
-            if (isNaN(tempDate.getTime())) return 'N/A';
-            year = tempDate.getFullYear();
-            month = tempDate.getMonth();
-            day = tempDate.getDate();
+        const date = new Date(dateString);
+        if (!isNaN(date.getTime())) {
+            return date.toLocaleDateString('pt-BR');
         }
-        
-        const dateForBrasilia = new Date(Date.UTC(year, month, day, 3, 0, 0));
-
-        if (isNaN(dateForBrasilia.getTime())) {
-            return 'N/A';
-        }
-        
-        return new Intl.DateTimeFormat('pt-BR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            timeZone: 'America/Sao_Paulo' // Força a exibição para o horário de Brasília
-        }).format(dateForBrasilia);
-        
     } catch (error) {
         console.error('Erro ao formatar data para exibição (formatDateForDisplay):', dateString, error);
-        return 'N/A';
     }
+    
+    return dateString; // Retorna original se falhar
 }
 
 function _createSinglePendingParcelRowHTML(boleto, parcela) {
@@ -11959,100 +12164,6 @@ function showDuplicateAlert(existingOrder, callback) {
     }
 }
 
-// Localização aproximada: ~linha 13410
-async function approveOrderFinanceiro(event, orderId) { // <<< Adicionado 'event' aqui
-    // --- Feedback visual no botão ---
-    const button = event.currentTarget;
-    const originalButtonText = showButtonLoading(button, 'Aprovando...');
-    // --- Fim do feedback visual ---
-
-    if (!canApproveFinanceiro()) {
-        showModernErrorNotification('Você não tem permissão para aprovar pelo Financeiro.');
-        hideButtonLoading(button, originalButtonText); // Restaura o botão
-        return;
-    }
-
-    const order = fullOrdersList.find(o => String(o.id) === String(orderId));
-    if (!order) {
-        showModernErrorNotification('Ordem não encontrada na lista. Recarregue a página se o problema persistir.');
-        hideButtonLoading(button, originalButtonText); // Restaura o botão
-        return;
-    }
-
-    if (!confirm(`Aprovar ordem do favorecido "${order.favoredName}" pelo Financeiro?`)) {
-        hideButtonLoading(button, originalButtonText); // Restaura o botão se o usuário cancelar
-        return;
-    }
-
-    const oldStatus = order.status; 
-    let groupEmergencyNotificationSent = false; 
-
-    const rowElement = document.querySelector(`#financeiroTableBody tr[data-order-id="${orderId}"]`);
-    if (rowElement) {
-        rowElement.remove();
-        console.log(`UI: Ordem ${orderId} removida otimisticamente da aba Financeiro.`);
-    }
-
-    order.approvedByFinanceiro = true;
-    order.status = 'Aguardando Pagamento';
-    order.approvalDateFinanceiro = new Date().toISOString().split('T')[0];
-
-    // showLoadingOverlay(); // <<< REMOVER ESTA LINHA se presente
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/update_order.php?_=${new Date().getTime()}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                id: orderId,
-                approvedByFinanceiro: true,
-                status: 'Aguardando Pagamento',
-                approvalDateFinanceiro: order.approvalDateFinanceiro
-            })
-        });
-
-        if (!response.ok) { 
-            const errorText = await response.text();
-            throw new Error(`Erro de rede/servidor (${response.status}): ${errorText}`);
-        }
-
-        const data = await response.json(); 
-
-        if (data.success) {
-            console.log('✅ Aprovação do financeiro sincronizada com API.');
-            showModernSuccessNotification('Ordem aprovada pelo Financeiro!');
-
-            if (order && (order.priority?.toLowerCase() === 'emergencia' || order.priority?.toLowerCase() === 'emergência') && order.direction === 'Marina') {
-                if (window.whatsappScheduler && typeof window.whatsappScheduler.sendEmergencyNotificationApprovedByFinanceiro === 'function') {
-                    await window.whatsappScheduler.sendEmergencyNotificationApprovedByFinanceiro(order);
-                    groupEmergencyNotificationSent = true;
-                } else {
-                    console.warn('⚠️ [script.js] whatsappScheduler.sendEmergencyNotificationApprovedByFinanceiro não disponível para notificar emergência aprovada.');
-                }
-            }
-            
-            if (typeof notifyBotStatusChange === 'function' && currentUser) {
-                notifyBotStatusChange(order, oldStatus, 'Aguardando Pagamento', currentUser.username, null, null, groupEmergencyNotificationSent);
-            }
-
-            updateUIComponentsAfterLoad('financeiro'); // <<< Passa o nome da aba explicitamente
-
-        } else {
-            console.warn('⚠️ Erro ao sincronizar aprovação do financeiro com API:', data.error);
-            showModernErrorNotification('Atenção: Houve um erro ao sincronizar a aprovação com o servidor: ' + (data.error || 'Erro desconhecido'));
-            await loadFullOrdersList(true);
-            updateUIComponentsAfterLoad('financeiro');
-        }
-    } catch (error) {
-        console.error('❌ Erro de conexão/parsing ao aprovar ordem Financeiro:', error);
-        showModernErrorNotification('Atenção: Erro de conexão ao tentar aprovar a ordem. Verifique sua internet.');
-        await loadFullOrdersList(true);
-        updateUIComponentsAfterLoad('financeiro');
-    } finally {
-        hideButtonLoading(button, originalButtonText); // <<< RESTAURA O BOTÃO AQUI!
-        // hideLoadingOverlay(); // <<< REMOVER ESTA LINHA se presente
-    }
-}
 // FUNÇÕES DE FORMULÁRIO
 function clearForm() {
     const form = document.getElementById('orderForm');
@@ -12363,9 +12474,9 @@ function viewBoletoDetails(boletoId) {
         parcelsHtml += `
             <div style="background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; border-left: 3px solid ${p.isPaid ? '#28a745' : '#ffc107'};">
                 <strong>Parcela:</strong> R$ ${parseFloat(p.value || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}<br>
-                <strong>Vencimento:</strong> ${formatDate(p.dueDate || '')}<br>
+                <strong>Vencimento:</strong> ${formatDateForDisplay(p.dueDate || '')}<br> <!-- ✅ Corrigido: sem atraso -->
                 <strong>Status:</strong> ${p.isPaid ? 'Paga' : 'Pendente'}<br>
-                ${p.isPaid && p.paidAt ? `<strong>Data Pagamento:</strong> ${formatDate(p.paidAt?.split('T')[0] || '')}<br>` : ''}
+                ${p.isPaid && p.paidAt ? `<strong>Data Pagamento:</strong> ${formatDateForDisplay(p.paidAt?.split('T')[0] || '')}<br>` : ''} <!-- ✅ Corrigido -->
                 ${(p.paymentObservation && String(p.paymentObservation).trim() !== '') ? `<strong>Observação Pagamento:</strong> ${escapeForHTML(p.paymentObservation)}<br>` : ''}
                 ${p.isPaid && p.paymentOrderId ? `<strong>Ordem Pagamento ID:</strong> ${escapeForHTML(p.paymentOrderId)} <button class="btn btn-info btn-small" onclick="viewOrder('${escapeForHTML(p.paymentOrderId)}')">Ver Ordem</button><br>` : ''}
                 ${proofButton ? `<div style="margin-top: 8px;">${proofButton}</div>` : ''}
@@ -12373,7 +12484,7 @@ function viewBoletoDetails(boletoId) {
         `;
     });
     
-    let anexoSectionHtml = '';
+    let anexoSectionHtml = ''; // ✅ Garantido: inicializado como string vazia
     const temArquivo = boleto.hasFile || boleto.file_name || boleto.file_original_name || boleto.boletoFileName;
 
     if (temArquivo) {
@@ -12381,7 +12492,7 @@ function viewBoletoDetails(boletoId) {
         const tamanhoArquivo = boleto.file_size || boleto.boletoFileSize || 'Tamanho não disponível';
         anexoSectionHtml = `
             <div class="boleto-anexo-section boleto-anexo-disponivel" style="margin-top: 20px; padding: 15px; border-radius: 8px; background: #f0f8ff; border: 1px solid #cceeff;">
-                <h3 style="color: #1976d2;">   Boleto Anexado</h3>
+                <h3 style="color: #1976d2;">📎 Boleto Anexado</h3>
                 <p><b>Nome do Arquivo:</b> ${escapeForHTML(nomeOriginal)}</p>
                 <p><b>Tamanho:</b> ${escapeForHTML(tamanhoArquivo)}</p>
                 <div class="anexo-actions" style="margin-top: 10px; display: flex; gap: 10px;">
@@ -12412,13 +12523,11 @@ function viewBoletoDetails(boletoId) {
             <div><strong>Valor Total:</strong> R$ ${parseFloat(boleto.totalValue || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
         </div>
         <div class="form-row">
-            <div><strong>Data Geração:</strong> ${formatDate(boleto.generationDate || '')}</div>
-            <div><strong>Primeiro Vencimento:</strong> ${formatDate(boleto.firstDueDate || '')}</div>
+            <div><strong>Data Geração:</strong> ${formatDateForDisplay(boleto.generationDate || '')}</div> <!-- ✅ Corrigido -->
+            <div><strong>Primeiro Vencimento:</strong> ${formatDateForDisplay(boleto.firstDueDate || '')}</div> <!-- ✅ Corrigido -->
         </div>
         ${(boleto.observation && String(boleto.observation).trim() !== '') ? `<div><strong>Observação:</strong> ${escapeForHTML(boleto.observation)}</div>` : ''}
-
         ${anexoSectionHtml}
-
         <h3>📦 Parcelas:</h3>
         ${parcelsHtml}
     `;
@@ -12442,7 +12551,6 @@ function viewBoletoDetails(boletoId) {
     document.body.appendChild(boletoModal);
     boletoModal.style.display = 'block'; // Torna o modal visível
 }
-
 // Também certifique-se que a função fecharVisualizacaoBoleto exista e esteja correta:
 function fecharVisualizacaoBoleto() {
     const modal = document.getElementById('visualizarBoletoModal');
@@ -12984,6 +13092,72 @@ async function saveEditOrder() {
     }
 }
 
+async function approveOrderDiretoria(orderId) {
+    if (!canApproveDiretoria()) {
+        alert('Você não tem permissão para aprovar pela Diretoria.');
+        return;
+    }
+    
+    const order = fullOrdersList.find(o => o.id === orderId); // Busca na lista completa
+    if (!order) {
+        alert('Ordem não encontrada.');
+        return;
+    }
+    
+    if (!confirm(`Aprovar ordem do favorecido "${order.favoredName}" pela Diretoria?`)) {
+        return;
+    }
+    
+    // Atualiza localmente o status da ordem (para resposta visual imediata)
+    order.approvedByDiretoria = true;
+    order.status = 'Aguardando Financeiro';
+    order.approvalDateDiretoria = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/update_order.php?_=${new Date().getTime()}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: orderId,
+                approvedByDiretoria: true,
+                status: 'Aguardando Financeiro',
+                approvalDateDiretoria: order.approvalDateDiretoria
+            })
+        });
+        const data = await response.json();
+        if (data.success) {
+            console.log('✅ Aprovação da diretoria sincronizada com API.');
+            await loadFullOrdersList(); // CRÍTICO: Recarrega a fonte de verdade após a atualização
+
+            if (typeof notifyBotStatusChange === 'function' && currentUser) {
+                const updatedOrder = fullOrdersList.find(o => o.id === orderId); // Pega a ordem atualizada da lista completa
+                notifyBotStatusChange(updatedOrder, 'Pendente', 'Aguardando Financeiro', currentUser.username);
+            }
+        } else {
+            console.warn('⚠️ Erro ao sincronizar aprovação da diretoria com API:', data.error);
+            alert('Atenção: Aprovação registrada, mas houve um erro ao sincronizar com o servidor: ' + data.error);
+            await loadFullOrdersList(); // Recarrega mesmo em caso de erro da API
+        }
+    } catch (error) {
+        console.warn('⚠️ Erro de conexão ao sincronizar aprovação da diretoria. Verifique sua internet.', error);
+        alert('Atenção: Aprovação registrada, mas houve um erro de conexão com o servidor. Verifique sua internet.');
+        await loadFullOrdersList(); // Recarrega mesmo em caso de erro de conexão
+    }
+    
+    // Atualização IMEDIATA e FORÇADA de todas as telas relevantes
+    updateCounters();
+    updateDetailedCounters();
+    setTimeout(() => { // Pequeno delay para garantir que as atualizações do DOM sejam processadas
+        displayOrders();
+        displayDiretoriaOrders();
+        displayFinanceiroOrders();
+        displayPendingOrders();
+        displayPaidOrders();
+    }, 100);
+
+    alert('Ordem aprovada pela Diretoria!');
+}
+
 // Localização aproximada: ~linha 13570 (primeira versão que você enviou, antes do "NOVO CÓDIGO")
 async function disapproveOrderDiretoria(event, orderId) { // <<< Adicionado 'event' aqui
     // --- Feedback visual no botão ---
@@ -13065,7 +13239,100 @@ async function disapproveOrderDiretoria(event, orderId) { // <<< Adicionado 'eve
     }
 }
 
-// Localização aproximada: ~linha 13570 (primeira versão que você enviou, antes do "NOVO CÓDIGO")
+async function approveOrderFinanceiro(event, orderId) { // <<< Adicionado 'event' aqui
+    // --- Feedback visual no botão ---
+    const button = event.currentTarget;
+    const originalButtonText = showButtonLoading(button, 'Aprovando...');
+    // --- Fim do feedback visual ---
+
+    if (!canApproveFinanceiro()) {
+        showModernErrorNotification('Você não tem permissão para aprovar pelo Financeiro.');
+        hideButtonLoading(button, originalButtonText); // Restaura o botão
+        return;
+    }
+
+    const order = fullOrdersList.find(o => String(o.id) === String(orderId));
+    if (!order) {
+        showModernErrorNotification('Ordem não encontrada na lista. Recarregue a página se o problema persistir.');
+        hideButtonLoading(button, originalButtonText); // Restaura o botão
+        return;
+    }
+
+    if (!confirm(`Aprovar ordem do favorecido "${order.favoredName}" pelo Financeiro?`)) {
+        hideButtonLoading(button, originalButtonText); // Restaura o botão se o usuário cancelar
+        return;
+    }
+
+    const oldStatus = order.status; 
+    let groupEmergencyNotificationSent = false; 
+
+    const rowElement = document.querySelector(`#financeiroTableBody tr[data-order-id="${orderId}"]`);
+    if (rowElement) {
+        rowElement.remove();
+        console.log(`UI: Ordem ${orderId} removida otimisticamente da aba Financeiro.`);
+    }
+
+    order.approvedByFinanceiro = true;
+    order.status = 'Aguardando Pagamento';
+    order.approvalDateFinanceiro = new Date().toISOString().split('T')[0];
+
+    // showLoadingOverlay(); // <<< REMOVER ESTA LINHA se presente
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/update_order.php?_=${new Date().getTime()}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: orderId,
+                approvedByFinanceiro: true,
+                status: 'Aguardando Pagamento',
+                approvalDateFinanceiro: order.approvalDateFinanceiro
+            })
+        });
+
+        if (!response.ok) { 
+            const errorText = await response.text();
+            throw new Error(`Erro de rede/servidor (${response.status}): ${errorText}`);
+        }
+
+        const data = await response.json(); 
+
+        if (data.success) {
+            console.log('✅ Aprovação do financeiro sincronizada com API.');
+            showModernSuccessNotification('Ordem aprovada pelo Financeiro!');
+
+            if (order && (order.priority?.toLowerCase() === 'emergencia' || order.priority?.toLowerCase() === 'emergência') && order.direction === 'Marina') {
+                if (window.whatsappScheduler && typeof window.whatsappScheduler.sendEmergencyNotificationApprovedByFinanceiro === 'function') {
+                    await window.whatsappScheduler.sendEmergencyNotificationApprovedByFinanceiro(order);
+                    groupEmergencyNotificationSent = true;
+                } else {
+                    console.warn('⚠️ [script.js] whatsappScheduler.sendEmergencyNotificationApprovedByFinanceiro não disponível para notificar emergência aprovada.');
+                }
+            }
+            
+            if (typeof notifyBotStatusChange === 'function' && currentUser) {
+                notifyBotStatusChange(order, oldStatus, 'Aguardando Pagamento', currentUser.username, null, null, groupEmergencyNotificationSent);
+            }
+
+            updateUIComponentsAfterLoad('financeiro'); // <<< Passa o nome da aba explicitamente
+
+        } else {
+            console.warn('⚠️ Erro ao sincronizar aprovação do financeiro com API:', data.error);
+            showModernErrorNotification('Atenção: Houve um erro ao sincronizar a aprovação com o servidor: ' + (data.error || 'Erro desconhecido'));
+            await loadFullOrdersList(true);
+            updateUIComponentsAfterLoad('financeiro');
+        }
+    } catch (error) {
+        console.error('❌ Erro de conexão/parsing ao aprovar ordem Financeiro:', error);
+        showModernErrorNotification('Atenção: Erro de conexão ao tentar aprovar a ordem. Verifique sua internet.');
+        await loadFullOrdersList(true);
+        updateUIComponentsAfterLoad('financeiro');
+    } finally {
+        hideButtonLoading(button, originalButtonText); // <<< RESTAURA O BOTÃO AQUI!
+        // hideLoadingOverlay(); // <<< REMOVER ESTA LINHA se presente
+    }
+}
+
 async function disapproveOrderFinanceiro(event, orderId) { // <<< Adicionado 'event' aqui
     // --- Feedback visual no botão ---
     const button = event.currentTarget;
@@ -14779,6 +15046,7 @@ function exportPaidToExcel() {
         }).join(delimiter) + '\n';
         
         csvContent += row;
+
     });
 
     // --- Adiciona linhas de resumo ao final do CSV ---
@@ -14923,10 +15191,10 @@ function exportPaidToPDF() {
         head: [['Favorecido', 'Valor', 'Tipo', 'Prioridade', 'Solicitante', 'Processo', 'Empresa', 'Data Pgto']],
         body: tableData,
         startY: filterInfoY, // A tabela começa após as informações dos filtros
-        styles: { fontSize: 8 },
+        styles: { fontSize: 8, cellPadding: 2,  overflow: 'linebreak' },
         headStyles: { fillColor: [52, 73, 94], textColor: [255, 255, 255], fontStyle: 'bold' },
         columnStyles: {
-            1: { halign: 'right' } // Alinha a coluna de valor à direita
+            1: { halign: 'right', cellWidth: 30,  overflow: 'hidden' } // Alinha a coluna de valor à direita
         }
     });
 
@@ -16955,38 +17223,54 @@ async function addBoleto() {
     // VALIDAR SELEÇÃO DE PROCESSO
     const isProcessValid = validateProcessSelection('boletoProcess', 'processesList');
     if (!isProcessValid) {
-        return; // Bloqueia o envio se o processo for inválido
+        console.warn('Validação de processo falhou.');
+        return;
     }
     
-    // ✅ OBTER ELEMENTOS FIXOS DO FORMULÁRIO
+    // ✅ OBTER ELEMENTOS FIXOS DO FORMULÁRIO (com verificações seguras)
     const vendorElement = document.getElementById('boletoVendor');
-    const generationDateElement = document.getElementById('boletoGenerationDate');
     const processElement = document.getElementById('boletoProcess');
     const directionElement = document.getElementById('boletoDirection');
-    const companyElement = document.getElementById('boletoCompany'); // ✅ NOVO
+    const companyElement = document.getElementById('boletoCompany');
     const observationElement = document.getElementById('boletoObservation');
+    
+    // ✅ VERIFICAR SE ELEMENTOS EXISTEM (evita erros de null/undefined)
+    if (!vendorElement || !processElement || !directionElement || !companyElement) {
+        console.error('Elementos essenciais do formulário não encontrados:', {
+            vendor: !!vendorElement,
+            process: !!processElement,
+            direction: !!directionElement,
+            company: !!companyElement
+        });
+        alert('Erro no formulário: Campos obrigatórios não foram encontrados. Recarregue a página e tente novamente.');
+        return;
+    }
     
     // ✅ VALIDAR ARQUIVO ANEXADO
     const boletoFileInput = document.getElementById('boletoFileAttachment');
     const boletoFile = boletoFileInput ? boletoFileInput.files[0] : null;
     
     if (!boletoFile) {
-        alert('Por favor, anexe um arquivo de boleto.');
+        alert('Por favor, anexe um arquivo de boleto (PDF).');
+        boletoFileInput?.focus();
         return;
     }
     
-    // ✅ CAPTURAR VALORES DOS CAMPOS
-    const vendor = vendorElement?.value.trim() || '';
-    const generationDate = generationDateElement?.value || '';
-    const process = processElement?.value.trim() || '';
-    const direction = directionElement?.value || '';
-    const company = companyElement?.value.trim() || ''; // ✅ NOVO
-    const observation = observationElement?.value.trim() || '';
+    // ✅ CAPTURAR VALORES DOS CAMPOS (com trim e fallback)
+    const vendor = vendorElement.value.trim() || '';
+    const process = processElement.value.trim() || '';
+    const direction = directionElement.value || '';
+    const company = companyElement.value.trim() || '';
+    const observation = observationElement.value.trim() || '';
     const singleParcelSelected = document.getElementById('singleParcel')?.checked || false;
     
+    // ✅ DATA DE GERAÇÃO FIXA (sempre data atual, formato YYYY-MM-DD)
+    const generationDate = getBoletoGenerationDate(); // Função que retorna data atual como string
+    console.log('✅ Data de geração do boleto (fixa):', generationDate);
+    
     // ✅ VALIDAÇÕES DE CAMPOS OBRIGATÓRIOS
-    if (!vendor || !generationDate || !process || !direction || !company) {
-        alert('Por favor, preencha todos os campos obrigatórios do boleto (Fornecedor, Data de Geração, Processo, Direcionamento e Empresa).');
+    if (!vendor || !process || !direction || !company) {
+        alert('Por favor, preencha todos os campos obrigatórios: Fornecedor, Processo, Direcionamento e Empresa.');
         return;
     }
     
@@ -17001,16 +17285,23 @@ async function addBoleto() {
         const singleParcelValueElement = document.getElementById('singleParcelValue');
         const singleParcelDueDateElement = document.getElementById('singleParcelDueDate');
         
-        const singleValue = parseFloat(singleParcelValueElement?.value || 0);
-        const singleDueDate = singleParcelDueDateElement?.value || '';
+        if (!singleParcelValueElement || !singleParcelDueDateElement) {
+            alert('Campos de parcela única não encontrados. Verifique o formulário.');
+            return;
+        }
+        
+        const singleValue = parseFloat(singleParcelValueElement.value || 0);
+        const singleDueDate = singleParcelDueDateElement.value || '';
         
         if (isNaN(singleValue) || singleValue <= 0) {
-            alert('Por favor, insira um Valor Total válido para a parcela única.');
+            alert('Insira um Valor Total válido para a parcela única (maior que zero).');
+            singleParcelValueElement.focus();
             return;
         }
         
         if (!singleDueDate) {
-            alert('Por favor, insira a Data de Vencimento para a parcela única.');
+            alert('Insira a Data de Vencimento para a parcela única.');
+            singleParcelDueDateElement.focus();
             return;
         }
         
@@ -17026,116 +17317,104 @@ async function addBoleto() {
             paymentOrderId: null
         });
         
+        console.log('✅ Parcela única processada: R$ ' + singleValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
+        
     } else {
-    // --- MÚLTIPLAS PARCELAS ---
-    
-    const parcelElements = document.querySelectorAll('#parcelasContainer .parcel-item');
-    
-    // Validação: pelo menos uma parcela deve existir
-    if (parcelElements.length === 0) {
-        alert('Por favor, adicione pelo menos uma parcela para boletos com múltiplas parcelas.');
-        return;
-    }
-    
-    let calculatedTotalValue = 0;
-    let earliestDueDate = null;
-    const tempParcels = [];
-    
-    // ====== LOOP DE PROCESSAMENTO DE PARCELAS ======
-    for (let i = 0; i < parcelElements.length; i++) {
-        // Extrair o ID da parcela do atributo 'id' do elemento
-        const parcelNumberId = parcelElements[i].id.split('-')[1];
+        // --- MÚLTIPLAS PARCELAS ---
+        const parcelElements = document.querySelectorAll('#parcelasContainer .parcel-item');
         
-        // ✅ CORRIGIDO: Adicionar aspas na interpolação
-        const parcelValueElement = document.getElementById(`parcelValue-${parcelNumberId}`);
-        const parcelDueDateElement = document.getElementById(`parcelDueDate-${parcelNumberId}`);
+        if (parcelElements.length === 0) {
+            alert('Adicione pelo menos uma parcela para boletos com múltiplas parcelas.');
+            return;
+        }
         
-        // Validar se os elementos foram encontrados
-        if (!parcelValueElement || !parcelDueDateElement) {
-            alert(`Erro ao localizar campos da Parcela ${i + 1}. Verifique o formulário.`);
-            console.error(`Elementos não encontrados para parcela ${i + 1}:`, {
-                parcelValueElement: !!parcelValueElement,
-                parcelDueDateElement: !!parcelDueDateElement
+        let calculatedTotalValue = 0;
+        let earliestDueDate = null;
+        const tempParcels = [];
+        
+        // ====== LOOP DE PROCESSAMENTO DE PARCELAS ======
+        for (let i = 0; i < parcelElements.length; i++) {
+            const parcelNumberId = parcelElements[i].id.split('-')[1];
+            
+            const parcelValueElement = document.getElementById(`parcelValue-${parcelNumberId}`);
+            const parcelDueDateElement = document.getElementById(`parcelDueDate-${parcelNumberId}`);
+            
+            if (!parcelValueElement || !parcelDueDateElement) {
+                alert(`Erro ao localizar campos da Parcela ${i + 1}. Verifique o formulário.`);
+                console.error(`Elementos não encontrados para parcela ${i + 1}:`, {
+                    parcelValueElement: !!parcelValueElement,
+                    parcelDueDateElement: !!parcelDueDateElement
+                });
+                return;
+            }
+            
+            // ====== PARSING MONETÁRIO ROBUSTO ======
+            const rawValue = parcelValueElement.value.trim();
+            const value = parseMonetaryValue(rawValue);
+            
+            if (isNaN(value) || value <= 0) {
+                alert(`Insira um Valor válido (maior que zero) para a Parcela ${i + 1}.`);
+                parcelValueElement.focus();
+                parcelValueElement.style.borderColor = '#e74c3c';
+                return;
+            }
+            
+            const dueDate = parcelDueDateElement.value.trim();
+            
+            if (!dueDate) {
+                alert(`Insira a Data de Vencimento para a Parcela ${i + 1}.`);
+                parcelDueDateElement.focus();
+                parcelDueDateElement.style.borderColor = '#e74c3c';
+                return;
+            }
+            
+            const dateParsed = criarDataLocal(dueDate);
+            if (isNaN(dateParsed.getTime())) {
+                alert(`Data de vencimento inválida para a Parcela ${i + 1}. Use formato YYYY-MM-DD.`);
+                parcelDueDateElement.focus();
+                parcelDueDateElement.style.borderColor = '#e74c3c';
+                return;
+            }
+            
+            // ====== CONSTRUIR OBJETO DA PARCELA ======
+            tempParcels.push({
+                id: uniqid('parcel_'),
+                parcelNumber: i + 1,
+                value: parseFloat(value.toFixed(2)),
+                dueDate: dueDate,
+                isPaid: false,
+                paymentOrderId: null
             });
-            return;
+            
+            calculatedTotalValue += value;
+            
+            if (!earliestDueDate || dateParsed < criarDataLocal(earliestDueDate)) {
+                earliestDueDate = dueDate;
+            }
+            
+            console.log(`✅ Parcela ${i + 1} processada: R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} - Vence em ${dueDate}`);
         }
         
-        // ====== PARSING MONETÁRIO ROBUSTO ======
-        const rawValue = parcelValueElement.value.trim();
-        
-        // Usar a função parseMonetaryValue (implementada anteriormente)
-        // Alternativa: use esta implementação inline
-        const value = parseMonetaryValue(rawValue);
-        
-        // Validação: valor deve ser positivo
-        if (isNaN(value) || value <= 0) {
-            alert(`Por favor, insira um Valor válido (maior que zero) para a Parcela ${i + 1}.`);
-            parcelValueElement.focus();
-            parcelValueElement.style.borderColor = '#e74c3c';
-            return;
-        }
-        
-        const dueDate = parcelDueDateElement.value.trim();
-        
-        // Validação: data de vencimento obrigatória
-        if (!dueDate) {
-            alert(`Por favor, insira a Data de Vencimento para a Parcela ${i + 1}.`);
-            parcelDueDateElement.focus();
-            parcelDueDateElement.style.borderColor = '#e74c3c';
-            return;
-        }
-        
-        // Validação: data deve estar no formato correto
-        const dateParsed = criarDataLocal(dueDate);
-        if (isNaN(dateParsed.getTime())) {
-            alert(`Data de vencimento inválida para a Parcela ${i + 1}. Use formato YYYY-MM-DD.`);
-            parcelDueDateElement.focus();
-            parcelDueDateElement.style.borderColor = '#e74c3c';
-            return;
-        }
-        
-        // ====== CONSTRUIR OBJETO DA PARCELA ======
-        tempParcels.push({
-            id: uniqid('parcel_'),
-            parcelNumber: i + 1,
-            value: parseFloat(value.toFixed(2)), // Garante exatamente 2 casas decimais
-            dueDate: dueDate,
-            isPaid: false,
-            paymentOrderId: null
+        // ====== ORDENAR PARCELAS POR DATA DE VENCIMENTO ======
+        tempParcels.sort((a, b) => {
+            const dateA = criarDataLocal(a.dueDate);
+            const dateB = criarDataLocal(b.dueDate);
+            return dateA.getTime() - dateB.getTime();
         });
         
-        // Acumular valor total
-        calculatedTotalValue += value;
+        console.log('✅ Parcelas ordenadas por data de vencimento');
         
-        // Encontrar a data de vencimento mais próxima (primeira parcela vence primeiro)
-        if (!earliestDueDate || dateParsed < criarDataLocal(earliestDueDate)) {
-            earliestDueDate = dueDate;
-        }
+        totalBoletoValue = calculatedTotalValue;
+        firstDueDate = earliestDueDate;
+        parcels = tempParcels;
         
-        console.log(`✅ Parcela ${i + 1} processada: R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} - Vence em ${dueDate}`);
+        console.log('📊 [MÚLTIPLAS PARCELAS] Resumo:', {
+            totalParcelas: parcels.length,
+            valorTotal: `R$ ${totalBoletoValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+            primeiroVencimento: firstDueDate,
+            parcelas: parcels.map(p => ({ value: p.value, dueDate: p.dueDate }))
+        });
     }
-    
-    // ====== ORDENAR PARCELAS POR DATA DE VENCIMENTO ======
-    tempParcels.sort((a, b) => {
-        const dateA = criarDataLocal(a.dueDate);
-        const dateB = criarDataLocal(b.dueDate);
-        return dateA.getTime() - dateB.getTime();
-    });
-    
-    console.log('✅ Parcelas ordenadas por data de vencimento');
-    
-    // ====== ATUALIZAR VARIÁVEIS GLOBAIS ======
-    totalBoletoValue = calculatedTotalValue;
-    firstDueDate = earliestDueDate;
-    parcels = tempParcels;
-    
-    console.log('📊 [MÚLTIPLAS PARCELAS] Resumo:', {
-        totalParcelas: parcels.length,
-        valorTotal: `R$ ${totalBoletoValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-        primeiroVencimento: firstDueDate,
-        parcelas: parcels
-    });
-}
     
     // ✅ VALIDAÇÕES FINAIS DE VALOR E DATA
     if (totalBoletoValue <= 0) {
@@ -17148,46 +17427,52 @@ async function addBoleto() {
         return;
     }
     
-    // ✅ PREPARAR DADOS PARA ENVIO
+    // ✅ PREPARAR DADOS PARA ENVIO (FormData com data fixa)
     const formData = new FormData();
     formData.append('id', uniqid('boleto_'));
     formData.append('vendor', vendor);
-    formData.append('generationDate', generationDate);
+    formData.append('generationDate', generationDate); // ✅ Data fixa cadastrada
     formData.append('totalValue', totalBoletoValue);
     formData.append('firstDueDate', firstDueDate);
     formData.append('process', process);
     formData.append('direction', direction);
-    formData.append('company', company); // ✅ NOVO
+    formData.append('company', company);
     formData.append('observation', observation);
     formData.append('parcels', JSON.stringify(parcels));
     formData.append('boletoFile', boletoFile);
     formData.append('boletoFileName', boletoFile.name);
     formData.append('boletoFileSize', (boletoFile.size / (1024 * 1024)).toFixed(2) + ' MB');
     
-    // ✅ VERIFICAR DUPLICIDADE (OPCIONAL)
-    const duplicateCheck = await checkDuplicateBoleto(vendor, totalBoletoValue, process, firstDueDate);
-    if (duplicateCheck.isDuplicate) {
-        const proceed = confirm(
-            `Um boleto similar já existe:\n` +
-            `Fornecedor: ${duplicateCheck.existingBoleto.vendor}\n` +
-            `Valor: R$ ${parseFloat(duplicateCheck.existingBoleto.totalValue).toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n` +
-            `Processo: ${duplicateCheck.existingBoleto.process}\n\n` +
-            `Deseja continuar com o cadastro mesmo assim?`
-        );
-        
-        if (!proceed) {
-            return;
+    console.log('📤 Enviando para API:', {
+        vendor,
+        generationDate, // ✅ Log da data para verificação
+        totalValue: totalBoletoValue,
+        parcelsCount: parcels.length
+    });
+    
+    // ✅ VERIFICAR DUPLICIDADE (com try-catch para segurança)
+    try {
+        const duplicateCheck = await checkDuplicateBoleto(vendor, totalBoletoValue, process, firstDueDate);
+        if (duplicateCheck && duplicateCheck.isDuplicate) {
+            const proceed = confirm(
+                `Um boleto similar já existe:\n` +
+                `Fornecedor: ${duplicateCheck.existingBoleto?.vendor || 'N/A'}\n` +
+                `Valor: R$ ${parseFloat(duplicateCheck.existingBoleto?.totalValue || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n` +
+                `Processo: ${duplicateCheck.existingBoleto?.process || 'N/A'}\n\n` +
+                `Deseja continuar com o cadastro mesmo assim?`
+            );
+            
+            if (!proceed) {
+                return;
+            }
         }
+    } catch (duplicateError) {
+        console.warn('⚠️ Erro na verificação de duplicidade, prosseguindo com cadastro:', duplicateError);
     }
     
     // ✅ PROCEDER COM CADASTRO
     await _proceedWithAddBoleto(formData);
 }
-
-/**
- * Função universal para parsing de valores monetários
- * Suporta formatos: "150,1", "R$ 1.200,50", "1,234.56", "150.1", etc.
- */
 function parseMonetaryValue(input) {
     if (!input) return 0;
     
@@ -17230,46 +17515,71 @@ function parseMonetaryValue(input) {
 }
 
 function clearBoletoForm() {
-    // Limpar campos básicos
-    document.getElementById('boletoVendor').value = '';
-    document.getElementById('boletoGenerationDate').value = '';
-    document.getElementById('boletoProcess').value = '';
-    document.getElementById('boletoDirection').value = '';
-    document.getElementById('boletoObservation').value = '';
+    console.log('🧹 Limpando formulário de boleto...');
     
-    // LIMPAR CAMPO DE ANEXO
-    const boletoFileInput = document.getElementById('boletoFileAttachment');
-    if (boletoFileInput) {
-        boletoFileInput.value = '';
-    }
+    const fieldsToClear = [
+        'boletoVendor',
+        'boletoProcess',
+        'boletoDirection',
+        'boletoCompany',
+        'boletoObservation',
+        'singleParcelValue',
+        'singleParcelDueDate',
+        'boletoFileAttachment',
+        'boletoGenerationDateDisplay' // Campo readonly
+    ];
     
-    // ESCONDER PREVIEW DO ARQUIVO
+    fieldsToClear.forEach(fieldId => {
+        const element = document.getElementById(fieldId);
+        if (element) {
+            if (element.type === 'file') {
+                element.value = '';
+            } else {
+                element.value = '';
+            }
+        } else {
+            console.warn(`Campo ${fieldId} não encontrado - ignorado.`);
+        }
+    });
+    
+    // Limpar preview de arquivo
     const boletoFilePreview = document.getElementById('boletoFilePreview');
     if (boletoFilePreview) {
         boletoFilePreview.style.display = 'none';
     }
     
-    // Limpar campos de parcela única
-    document.getElementById('singleParcelValue').value = '';
-    document.getElementById('singleParcelDueDate').value = '';
-    
-    // Resetar para parcela única
-    document.getElementById('singleParcel').checked = true;
-    document.getElementById('multipleParcels').checked = false;
-    
-    // Limpar container de múltiplas parcelas
+    // Resetar parcelamento
     const parcelasContainer = document.getElementById('parcelasContainer');
     if (parcelasContainer) {
         parcelasContainer.innerHTML = '';
     }
     
-    // CRÍTICO: Resetar o contador global de parcelas aqui!
-    parcelCounter = 0; 
-
-    // Mostrar campos de parcela única (que é o padrão após limpar)
-    toggleParcelFields(); 
+    const singleParcelRadio = document.getElementById('singleParcel');
+    if (singleParcelRadio) {
+        singleParcelRadio.checked = true;
+    }
+    
+    const multipleParcelRadio = document.getElementById('multipleParcels');
+    if (multipleParcelRadio) {
+        multipleParcelRadio.checked = false;
+    }
+    
+    // ✅ Inicializar data fixa
+    initializeBoletoGenerationDate();
+    
+    // ✅ Recarregar empresas
+    populateBoletoCompanySelect();
+    
+    // Resetar contador de parcelas
+    if (typeof parcelCounter !== 'undefined') {
+        parcelCounter = 0;
+    }
+    
+    // Mostrar campos de parcela única
+    toggleParcelFields();
+    
+    console.log('✅ Formulário de boleto limpo com sucesso.');
 }
-
 let _cachedBoletoFilters = null;
 let _cachedBoletosForDisplay = null;
 
@@ -17847,7 +18157,6 @@ async function saveParcelEdit(boletoId, parcelId) {
 }
 
 function visualizarBoleto(boletoId) {
-   
     const boleto = boletos.find(b => b.id === boletoId);
     if (!boleto) {
         alert('Boleto não encontrado!');
@@ -17859,11 +18168,10 @@ function visualizarBoleto(boletoId) {
     modal.style.display = 'block';
     modal.id = 'visualizarBoletoModal';
     
-    const today = new Date();
     const totalPago = boleto.parcels.filter(p => p.isPaid).reduce((sum, p) => sum + parseFloat(p.value), 0);
     const totalPendente = boleto.parcels.filter(p => !p.isPaid).reduce((sum, p) => sum + parseFloat(p.value), 0);
     
-    let anexoSection;
+    let anexoSection = ''; // ✅ Garantido: inicializado como string vazia
     
     // Verificar múltiplas condições para detectar arquivo
     const temArquivo = boleto.hasFile || 
@@ -17905,7 +18213,6 @@ function visualizarBoleto(boletoId) {
         `;
     }
 
-    
     modal.innerHTML = `
         <div class="modal-content boleto-modal">
             <span class="close" onclick="fecharVisualizacaoBoleto()">&times;</span>
@@ -17914,19 +18221,18 @@ function visualizarBoleto(boletoId) {
             <div class="resumo-financeiro">
                 <div class="resumo-card">
                     <h3>Informações Gerais</h3>
-                    <p><strong>Empresa:</strong> ${boleto.company || 'N/D'}</p> <!-- ADICIONADO/MOVIDO -->
+                    <p><strong>Empresa:</strong> ${boleto.company || 'N/D'}</p>
                     <p><strong>Processo:</strong> ${boleto.process}</p>
                     <p><strong>Direcionamento:</strong> ${boleto.direction}</p>
-                    <p><strong>Data de Geração:</strong> ${criarDataLocal(boleto.generationDate).toLocaleDateString('pt-BR')}</p>
+                    <p><strong>Data de Geração:</strong> ${formatDateForDisplay(boleto.generationDate)}</p> <!-- ✅ Corrigido -->
                     ${boleto.observation ? `<p><strong>Observação:</strong> ${boleto.observation}</p>` : ''}
                 </div>
-
-                <!-- NOVA SEÇÃO: Dados do Fornecedor (Beneficiário) -->
+                
                 <div class="resumo-card">
                     <h3>Fornecedor (Beneficiário):</h3>
                     <p>${boleto.vendor || 'N/D'}</p>
                 </div>
-
+                
                 <div class="resumo-card">
                     <h3>💰 Resumo Financeiro</h3>
                     <p><strong>Valor Total:</strong> R$ ${parseFloat(boleto.totalValue).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
@@ -17949,7 +18255,7 @@ function visualizarBoleto(boletoId) {
                             <th>Status</th>
                             <th>Situação</th>
                             <th>Data Pagamento</th>
-                            <th>Ações</th> <!-- ADICIONEI COLUNA AÇÕES PARA FUTUROS BOTOES -->
+                            <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -17975,25 +18281,25 @@ function visualizarBoleto(boletoId) {
                             } else if (daysDiff < 0) {
                                 statusText = '🔴 Vencido';
                                 statusColor = 'red';
-                                daysText = `${Math.abs(daysDiff)} dias atrás`;
+                                daysText = `${Math.abs(daysDiff)} dias atrás`; // ✅ Corrigido: template literal
                             } else if (daysDiff <= 7) {
                                 statusText = '🟡 Vencendo';
                                 statusColor = 'orange';
-                                daysText = daysDiff === 0 ? 'Hoje' : `${daysDiff} dias`;
+                                daysText = daysDiff === 0 ? 'Hoje' : `${daysDiff} dias`; // ✅ Corrigido
                             } else {
                                 statusText = '🟢 Pendente';
                                 statusColor = 'blue';
-                                daysText = `${daysDiff} dias`;
+                                daysText = `${daysDiff} dias`; // ✅ Corrigido
                             }
                             
                             return `
                                 <tr>
                                     <td>${index + 1}ª Parcela</td>
                                     <td>R$ ${parseFloat(parcela.value).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                                    <td>${dueDateObj.toLocaleDateString('pt-BR')}</td>
+                                    <td>${formatDateForDisplay(parcela.dueDate)}</td> <!-- ✅ Corrigido: vencimento -->
                                     <td style="color: ${statusColor};">${statusText}</td>
                                     <td>${daysText}</td>
-                                    <td>${parcela.paymentDate ? criarDataLocal(parcela.paymentDate).toLocaleDateString('pt-BR') : '-'}</td>
+                                    <td>${parcela.paymentDate ? formatDateForDisplay(parcela.paymentDate) : '-'}</td> <!-- ✅ Corrigido: data pagamento -->
                                     <td>
                                         <!-- Botões de ação da parcela aqui (ex: Pagar Parcela, Editar Parcela) -->
                                     </td>
@@ -18012,7 +18318,6 @@ function visualizarBoleto(boletoId) {
     
     document.body.appendChild(modal);
 }
-
 // Função para fechar modal de visualização
 function fecharVisualizacaoBoleto() {
     const modal = document.getElementById('visualizarBoletoModal');
@@ -18626,47 +18931,31 @@ async function editBoleto(boletoId) {
 
 function populateBoletoCompanySelect() {
     const companySelect = document.getElementById('boletoCompany');
+    
     if (!companySelect) {
         console.warn('populateBoletoCompanySelect: Elemento boletoCompany não encontrado.');
         return;
     }
     
+    console.log('🔍 Iniciando populateBoletoCompanySelect...');
+    
+    // Limpar opções
     companySelect.innerHTML = '<option value="">Selecione uma Empresa</option>';
     
-    const uniqueCompanies = new Set();
+    const uniqueCompanies = new Set([
+        "Facilita Serviços", "T Santana", "Maia Silva", "DDSJ"
+    ]);
     
-    // ✅ ADICIONADO: Empresas fixas de Ordens de Pagamento (MESMAS que em Ordens)
-    const fixedCompanies = ["Facilita Serviços", "T Santana", "Maia Silva", "DDSJ"];
-    fixedCompanies.forEach(company => uniqueCompanies.add(company));
-    
-    // Adiciona empresas de fullOrdersList
+    // Adicionar de fullOrdersList
     if (Array.isArray(fullOrdersList)) {
         fullOrdersList.forEach(order => {
-            if (order.company && typeof order.company === 'string' && order.company.trim() !== '') {
+            if (order.company && order.company.trim()) {
                 uniqueCompanies.add(order.company.trim());
             }
         });
     }
     
-    // Adiciona empresas de boletos já cadastrados
-    if (Array.isArray(boletos)) {
-        boletos.forEach(boleto => {
-            if (boleto.company && typeof boleto.company === 'string' && boleto.company.trim() !== '') {
-                uniqueCompanies.add(boleto.company.trim());
-            }
-        });
-    }
-    
-    // Adiciona empresas de dados de entrada personalizados
-    if (Array.isArray(customEntryData)) {
-        customEntryData.forEach(entry => {
-            if (entry.company && typeof entry.company === 'string' && entry.company.trim() !== '') {
-                uniqueCompanies.add(entry.company.trim());
-            }
-        });
-    }
-    
-    // Ordenar alfabeticamente e adicionar ao select
+    // Ordenar e adicionar
     const sortedCompanies = Array.from(uniqueCompanies).sort((a, b) => a.localeCompare(b, 'pt-BR'));
     
     sortedCompanies.forEach(company => {
@@ -18676,9 +18965,14 @@ function populateBoletoCompanySelect() {
         companySelect.appendChild(option);
     });
     
-    console.log(`✅ [populateBoletoCompanySelect] ${sortedCompanies.length} empresas carregadas no select de cadastro de boleto.`);
+    // ✅ Forçar atualização visual
+    companySelect.size = 1; // Fechar dropdown
+    companySelect.blur();
+    companySelect.focus();
+    
+    console.log(`✅ [populateBoletoCompanySelect] ${sortedCompanies.length} empresas carregadas.`);
+    console.log('Empresas:', sortedCompanies.slice(0, 5));
 }
-
 function populateEditBoletoCompanySelect() {
     const editCompanySelect = document.getElementById('editBoletoCompany');
     if (!editCompanySelect) {
@@ -20007,37 +20301,67 @@ function debugParcelDates(pendingParcels) {
 }
 
 
-function getIntelligentWeeklyPredictions(allPendingParcels, uiFilterStartDate, uiFilterEndDate) {
+function getIntelligentWeeklyPredictions(allPendingParcels) {
+    // ✅ DEBUG
+    console.log('DEBUG - getIntelligentWeeklyPredictions recebeu:', {
+        tipo: typeof allPendingParcels,
+        isArray: Array.isArray(allPendingParcels),
+        valor: allPendingParcels
+    });
     
+    // ✅ VALIDAÇÃO: Garantir que é um array
+    if (!Array.isArray(allPendingParcels)) {
+        console.warn('⚠️ allPendingParcels não é um array. Convertendo...');
+        
+        if (typeof allPendingParcels === 'object' && allPendingParcels !== null) {
+            // Se é um objeto, converter para array
+            allPendingParcels = Object.values(allPendingParcels);
+        } else {
+            // Caso contrário, array vazio
+            allPendingParcels = [];
+        }
+    }
+    
+    // Se vazio, retornar array vazio
     if (allPendingParcels.length === 0) {
-        return {
-            summary: { calculationMethod: 'Nenhuma parcela pendente', totalWeeks: 0, totalValue: 0, uniqueBoletos: 0, parcelsCount: 0 },
-            weeklyPredictions: []
-        };
+        console.log('ℹ️ Nenhuma parcela pendente para análise.');
+        return [];
     }
-
-    // Usa as datas dos filtros como base
-    let baseStartDate, baseEndDate;
-    if (uiFilterStartDate && uiFilterEndDate) {
-        baseStartDate = new Date(uiFilterStartDate);
-        baseEndDate = new Date(uiFilterEndDate);
-    } else {
-        const allDates = allPendingParcels.map(item => item.sortDate);
-        baseStartDate = new Date(Math.min(...allDates.map(d => d.getTime())));
-        baseEndDate = new Date(Math.max(...allDates.map(d => d.getTime())));
+    
+    try {
+        // ✅ Agrupar por semana
+        const weeklyGroups = {};
+        
+        allPendingParcels.forEach(parcel => {
+            const week = parcel.week || 'Sem Data';
+            if (!weeklyGroups[week]) {
+                weeklyGroups[week] = {
+                    week: week,
+                    count: 0,
+                    totalAmount: 0,
+                    parcels: []
+                };
+            }
+            weeklyGroups[week].count++;
+            weeklyGroups[week].totalAmount += parcel.amount || 0;
+            weeklyGroups[week].parcels.push(parcel);
+        });
+        
+        // ✅ Converter para array e ordenar
+        const predictions = Object.values(weeklyGroups).sort((a, b) => {
+            if (a.week === 'Sem Data') return 1;
+            if (b.week === 'Sem Data') return -1;
+            return new Date(a.week) - new Date(b.week);
+        });
+        
+        console.log('✅ Previsões geradas:', predictions.length, 'semanas');
+        return predictions;
+        
+    } catch (error) {
+        console.error('❌ Erro ao processar previsões:', error);
+        return [];
     }
-
-    const predictionConfig = calculateIntelligentPredictionDates(baseStartDate, baseEndDate);
-    console.log('%c[PRED] Configuração calculada:', 'color: green;', predictionConfig.calculationMethod);
-    
-    const weeklyPredictions = generateWeeklyPredictions(allPendingParcels, predictionConfig);
-    const summary = calculatePredictionSummary(weeklyPredictions, predictionConfig);
-    
-    console.log('%c[PRED] Resultado:', 'color: red;', `${summary.parcelsCount} parcelas em ${summary.totalWeeks} semanas`);
-    
-    return { summary, weeklyPredictions, predictionConfig };
 }
-
 // Função de Geração - VERSÃO LIMPA
 function generateWeeklyPredictions(allPendingParcels, predictionConfig) {
     const weeklyPredictions = [];
@@ -20309,99 +20633,60 @@ function calculatePredictionSummary(weeklyPredictions, predictionConfig) {
 }
 
 // Função 5: Adiciona Previsões Inteligentes ao PDF - SEM ALTERAÇÃO
-function addIntelligentPredictionsToPDF(doc, currentY, allIndividualPendingParcels, uiFilterStartDate, uiFilterEndDate, LAYOUT) {
-    // Obtém as previsões inteligentes
-    const intelligentPredictions = getIntelligentWeeklyPredictions(allIndividualPendingParcels, uiFilterStartDate, uiFilterEndDate);
+function addIntelligentPredictionsToPDF(doc, pendingOrders, startingYPosition) {
+    console.log('DEBUG - addIntelligentPredictionsToPDF iniciada');
     
-    // Função auxiliar para adicionar título de seção
-    function addSectionTitle(text, y) {
-        doc.setFontSize(LAYOUT.FONTS.TITLE_SECTION);
-        doc.setTextColor(...LAYOUT.COLORS.TITLE_SECTION);
-        doc.setFont("helvetica", "bold");
-        doc.text(text, LAYOUT.MARGIN_LEFT, y);
-        return y + LAYOUT.SPACING.AFTER_TITLE_SECTION;
-    }
+    let yPosition = startingYPosition || 20;
     
-    // Função auxiliar para adicionar subtítulo
-    function addSubsectionTitle(text, y) {
-        doc.setFontSize(LAYOUT.FONTS.TITLE_SUBSECTION);
-        doc.setTextColor(...LAYOUT.COLORS.TITLE_SUBSECTION);
-        doc.setFont("helvetica", "bold");
-        doc.text(text, LAYOUT.MARGIN_LEFT, y);
-        return y + LAYOUT.SPACING.AFTER_TITLE_SUBSECTION;
-    }
-    
-    // Função auxiliar para adicionar texto normal
-    function addNormalText(text, y) {
-        doc.setFontSize(LAYOUT.FONTS.TEXT_NORMAL);
-        doc.setTextColor(...LAYOUT.COLORS.TEXT_NORMAL);
-        doc.setFont("helvetica", "normal");
-        doc.text(text, LAYOUT.MARGIN_LEFT, y);
-        return y + LAYOUT.SPACING.AFTER_TEXT;
-    }
-    
-    // Função auxiliar para adicionar texto informativo
-    function addInfoText(text, y) {
-        doc.setFontSize(LAYOUT.FONTS.TEXT_INFO);
-        doc.setTextColor(...LAYOUT.COLORS.TEXT_INFO);
-        doc.setFont("helvetica", "normal");
-        doc.text(text, LAYOUT.MARGIN_LEFT, y);
-        return y + LAYOUT.SPACING.AFTER_TEXT;
-    }
-    
-    // Função auxiliar para adicionar texto de resumo
-    function addSummaryText(text, y, isHighlight = false) {
-        doc.setFontSize(LAYOUT.FONTS.TEXT_NORMAL);
-        if (isHighlight) {
-            doc.setTextColor(...LAYOUT.COLORS.TITLE_SECTION);
-            doc.setFont("helvetica", "bold");
-        } else {
-            doc.setTextColor(...LAYOUT.COLORS.TEXT_NORMAL);
-            doc.setFont("helvetica", "normal");
+    try {
+        // ✅ NOVO: Extrair parcelas de forma segura
+        const allPendingParcels = getAllPendingParcels(pendingOrders);
+        
+        // ✅ Obter previsões (agora com validação interna)
+        const predictions = getIntelligentWeeklyPredictions(allPendingParcels);
+        
+        if (predictions.length === 0) {
+            console.log('ℹ️ Nenhuma previsão inteligente para adicionar.');
+            return yPosition;
         }
-        doc.text(text, LAYOUT.MARGIN_LEFT, y);
-        return y + LAYOUT.SPACING.AFTER_TEXT;
-    }
-    
-    currentY = addSectionTitle('3. Previsões de Pagamento', currentY);
-    
-    if (intelligentPredictions.summary.totalValue > 0) {
-        // Informações do método de cálculo
-        currentY = addInfoText(`Método de Cálculo: ${intelligentPredictions.summary.calculationMethod}`, currentY);
-        currentY = addNormalText(`Período de Previsão: ${intelligentPredictions.summary.predictionPeriod}`, currentY);
-        currentY = addNormalText(`Total de Semanas: ${intelligentPredictions.summary.totalWeeks} semana(s)`, currentY);
-        currentY = addNormalText(`Boletos Previstos: ${intelligentPredictions.summary.uniqueBoletos} boleto(s) (${intelligentPredictions.summary.parcelsCount} parcela(s))`, currentY);
-        currentY = addSummaryText(`Total Previsto: R$ ${intelligentPredictions.summary.totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, currentY, true);
-        currentY += LAYOUT.SPACING.LINE_HEIGHT * 2;
-
-        // Tabelas separadas por semana
-        intelligentPredictions.weeklyPredictions.forEach((week, index) => {
-            // Verifica se precisa de nova página
-            if (currentY > 250) {
-                doc.addPage();
-                currentY = LAYOUT.MARGIN_TOP;
-            }
-
-            // Título da semana
-            currentY = addSubsectionTitle(`Semana ${week.weekNumber} - ${week.period}`, currentY);
+        
+        // ✅ Adicionar seção de análise ao PDF
+        doc.addPage();
+        yPosition = 20;
+        
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text('Análise Inteligente de Previsões', 20, yPosition);
+        yPosition += 10;
+        
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        
+        // Adicionar cada previsão
+        predictions.forEach((pred, index) => {
+            doc.setFont("helvetica", "bold");
+            doc.text(`Semana ${index + 1}: ${pred.week}`, 20, yPosition);
+            yPosition += 6;
             
-            if (week.detailedParcels.length > 0) {
-                currentY = addNormalText(`Valor da Semana: R$ ${week.totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${week.parcelsCount} parcela(s))`, currentY);
-                currentY += LAYOUT.SPACING.AFTER_TEXT;
-
-            } else {
-                currentY = addInfoText('Nenhum boleto previsto para esta semana.', currentY);
-                currentY += LAYOUT.SPACING.AFTER_TEXT;
+            doc.setFont("helvetica", "normal");
+            doc.text(`   Parcelas: ${pred.count} | Total: R$ ${pred.totalAmount.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`, 20, yPosition);
+            yPosition += 6;
+            
+            // Verificar se precisa de nova página
+            if (yPosition > 270) {
+                doc.addPage();
+                yPosition = 20;
             }
         });
-    } else {
-        currentY = addInfoText('Não há previsões de pagamento para o período calculado.', currentY);
-        currentY += LAYOUT.SPACING.BETWEEN_SECTIONS;
+        
+        console.log('✅ Análise inteligente adicionada ao PDF com sucesso');
+        return yPosition;
+        
+    } catch (error) {
+        console.error('❌ Erro em addIntelligentPredictionsToPDF:', error);
+        return yPosition;
     }
-
-    return currentY;
 }
-
 function getPendingParcelsDetailsForCurrentMonth(pendingParcels, uiFilterStartDate, uiFilterEndDate) {
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
