@@ -1,4 +1,3 @@
-window.DISABLE_WHATSAPP_BOT = true; 
 // Variáveis globais
 let orders = [];
 let highlightNewOrderId = null;
@@ -469,12 +468,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }, 500));
     }
 
-    // Inicialização do WhatsApp (aguardando)
-    const whatsappAllInitialized = await orchestrateWhatsAppInitialization();
-    if (!whatsappAllInitialized) {
-        console.warn('⚠️ [script.js] A inicialização completa do Bot WhatsApp falhou. Algumas funcionalidades podem estar indisponíveis.');
-    }
-
     // Define data atual para campos de geração
     const getLocalYYYYMMDD = () => new Date().toLocaleDateString('en-CA'); 
     
@@ -537,12 +530,20 @@ document.addEventListener('DOMContentLoaded', async function() {
                 //parseBoletoPDF(file);
 
             } else {
-                // Se nenhum arquivo foi selecionado (ex: usuário cancelou a seleção)
+                // Limpa os textos do preview
                 boletoFileNameSpan.textContent = '';
                 boletoFileSizeSpan.textContent = '';
-                boletoFileErrorMsgSpan.style.display = 'block'; // Mostra a mensagem de erro padrão
-                boletoFilePreview.style.display = 'block'; // Manter preview visível para mostrar a mensagem de erro
-                // --- Limpar campos se nenhum arquivo for selecionado ---
+                
+                // Esconde o preview de arquivo
+                boletoFilePreview.style.display = 'none';
+                
+                // Remove a mensagem de erro, se houver
+                boletoFileErrorMsgSpan.style.display = 'none';
+                
+                // Remove qualquer classe de "arquivo válido" (ex: .is-valid)
+                boletoFileInput.classList.remove('is-valid');
+                
+                // Limpa os campos do formulário relacionados ao boleto
                 clearParsedBoletoFields();
             }
         });
@@ -830,93 +831,6 @@ function exibirConferenciaBoletoPDF(data) {
 
     document.body.appendChild(modal);
 }
-/*
-async function parseBoletoPDF(file) {
-    const boletoVendorInput = document.getElementById('boletoVendor');
-    const boletoObservationTextarea = document.getElementById('boletoObservation');
-    const singleParcelRadio = document.getElementById('singleParcel');
-    const multipleParcelsRadio = document.getElementById('multipleParcels');
-    const singleParcelValueInput = document.getElementById('singleParcelValue');
-    const singleParcelDueDateInput = document.getElementById('singleParcelDueDate');
-    const boletoFileErrorMsgSpan = document.getElementById('boletoFileErrorMsg');
-    const linhaDigitavelInput = document.getElementById('linhaDigitavel');
-
-    if (!boletoVendorInput || !boletoObservationTextarea || !singleParcelRadio || !multipleParcelsRadio || !singleParcelValueInput || !singleParcelDueDateInput || !boletoFileErrorMsgSpan || !linhaDigitavelInput) {
-        console.error('Um ou mais elementos do formulário de boleto para preenchimento automático não foram encontrados. Verifique os IDs.');
-        showModernErrorNotification('Erro interno: Formulário de boleto incompleto para leitura automática. Contate o suporte.');
-        return;
-    }
-
-    boletoFileErrorMsgSpan.style.display = 'none';
-    showLoadingOverlay();
-
-    const formData = new FormData();
-    formData.append('boleto', file);
-
-    try {
-        const response = await fetch('api/processar_boleto.php', {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Erro HTTP ${response.status}: ${errorText}`);
-        }
-
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('A API retornou uma resposta que não é JSON válido');
-        }
-
-        const data = await response.json();
-
-        if (!data.success) {
-            showModernErrorNotification('Boleto anexado, mas não foi possível realizar a leitura. Preencha os campos manualmente.');
-            boletoFileErrorMsgSpan.textContent = 'Boleto anexado, mas não foi possível realizar a leitura. Preencha os campos manualmente.';
-            boletoFileErrorMsgSpan.style.display = 'block';
-            clearParsedBoletoFields();
-            return;
-        }
-
-        boletoVendorInput.value = data.fornecedor || '';
-        boletoObservationTextarea.value = data.observacao || '';
-        linhaDigitavelInput.value = data.linha_digitavel || '';
-        exibirConferenciaBoletoPDF(data);
-
-        if (data.parcels_extracted_from_pdf && data.parcels_extracted_from_pdf.length > 1) {
-            multipleParcelsRadio.checked = true;
-            toggleParcelFields();
-            const parcelasContainer = document.getElementById('parcelasContainer');
-            if (parcelasContainer) parcelasContainer.innerHTML = '';
-            parcelCounter = 0;
-            data.parcels_extracted_from_pdf.forEach(parcel => {
-                addParcelField(parcel.value, parcel.dueDate);
-            });
-            exibirConferenciaBoletoPDF(data);
-        } else if (data.valor_total > 0 && data.data_vencimento) {
-            singleParcelRadio.checked = true;
-            toggleParcelFields();
-            singleParcelValueInput.value = data.valor_total.toFixed(2);
-            singleParcelDueDateInput.value = data.data_vencimento;
-            exibirConferenciaBoletoPDF(data);
-        } else {
-            singleParcelRadio.checked = true;
-            toggleParcelFields();
-            showModernInfoNotification('Boleto lido, mas não foi possível extrair dados de parcela automaticamente. Por favor, preencha manualmente.');
-        }
-
-    } catch (error) {
-        console.error('Erro ao processar boleto PDF via API:', error);
-        showModernErrorNotification('Boleto anexado, mas não foi possível realizar a leitura. Preencha os campos manualmente.');
-        boletoFileErrorMsgSpan.textContent = 'Boleto anexado, mas não foi possível realizar a leitura. Preencha os campos manualmente.';
-        boletoFileErrorMsgSpan.style.display = 'block';
-        clearParsedBoletoFields();
-    } finally {
-        hideLoadingOverlay();
-    }
-}
-*/
 
 function populatePaidCompanyFilter() {
     const select = document.getElementById('paidFilterCompany');
@@ -1066,68 +980,7 @@ function clearSelection() {
         passwordInput.value = '';
     }
 }
-// =======================================================
-// FUNÇÃO GLOBAL DE ORQUESTRAÇÃO DO WHATSAPP (Mova para o escopo global do script.js)
-// =======================================================
-async function orchestrateWhatsAppInitialization() {
-    try {
-        if (typeof window.whatsAppIntegration !== 'undefined' && typeof window.whatsAppIntegration.initialize === 'function') {
-            await window.whatsAppIntegration.initialize();
-        } else {
-            console.warn('⚠️ [script.js] WhatsApp Integration base não encontrado ou não inicializável.');
-        }
 
-        const scheduler = await waitForWhatsAppScheduler();
-        if (scheduler) {
-             console.log('✅ [script.js] WhatsAppScheduler encontrado e inicializado.');
-        } else {
-            console.warn('⚠️ [script.js] WhatsAppScheduler não foi encontrado após tentativas.');
-        }
-
-        if (typeof window.WhatsAppBot !== 'undefined' && typeof window.WhatsAppBot === 'function') {
-            window.whatsappBot = new window.WhatsAppBot();
-            await window.whatsappBot.initialize();
-            console.log('✅ [script.js] WhatsAppBot core inicializado.');
-        } else {
-            console.warn('⚠️ [script.js] WhatsAppBot core (classe) não encontrado. Notificações do bot podem não funcionar.');
-        }
-
-        if (typeof window.whatsappBotIntegration !== 'undefined' && typeof window.whatsappBotIntegration.initialize === 'function') {
-            await window.whatsappBotIntegration.initialize();
-            console.log('✅ [script.js] WhatsAppBotIntegration inicializado.');
-        } else {
-            console.warn('⚠️ [script.js] WhatsAppBotIntegration (instância) não encontrado. Notificações do bot podem não funcionar.');
-        }
-        return true;
-
-    } catch (error) {
-        console.error('❌ [script.js] Erro na orquestração WhatsApp:', error);
-        return false;
-    }
-}
-
-// ... (certifique-se que waitForWhatsAppScheduler está definida logo abaixo dela ou acima) ...
-async function waitForWhatsAppScheduler(maxAttempts = 10, delayMs = 500) {
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        if (typeof window.whatsappScheduler !== 'undefined') {
-            if (typeof window.whatsappScheduler.initialize === 'function' && !window.whatsappScheduler.isInitialized) {
-                try {
-                    await window.whatsappScheduler.initialize();
-                } catch (error) {
-                    console.warn('⚠️ [script.js] Erro na inicialização do WhatsAppScheduler:', error);
-                }
-            }
-            return window.whatsappScheduler;
-        }
-        
-        if (attempt < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, delayMs));
-        }
-    }
-    
-    console.warn('⚠️ [script.js] WhatsAppScheduler não foi encontrado após todas as tentativas.');
-    return null;
-}
 // =======================================================
 // FUNÇÕES DE LOGIN (SUBSTITUA A SUA VERSÃO ATUAL)
 // =======================================================
@@ -1139,53 +992,68 @@ async function login() {
 
     const passwordInput = document.getElementById('password');
     const password = passwordInput.value.trim();
-    
+
     if (!password) {
         alert('Por favor, digite a senha.');
         passwordInput.focus();
         return;
     }
 
-    const passwords = {
-        'Geral': '123', 'Diretoria': 'd123', 'Financeiro': 'f123',
-        'Pagador': 'p123', 'Comum': 'c123', 'RH': 'r123'
-    };
-
-    if (passwords[selectedRole] !== password) {
-        alert('Senha incorreta!');
-        passwordInput.value = '';
-        passwordInput.focus();
-        return;
+    const loginBtn = document.getElementById('loginBtn');
+    const originalText = loginBtn?.innerHTML;
+    if (loginBtn) {
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validando...';
     }
 
-    authToken = btoa(selectedRole + ':' + Date.now());
-    currentUser = { username: selectedRole, role: selectedRole };
+    try {
+        const response = await fetch(`${API_BASE_URL}/login.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: selectedRole, password: password })
+        });
 
-    localStorage.setItem('authToken', authToken);
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        const data = await response.json();
 
-    document.getElementById('loginSection').style.display = 'none';
-    document.getElementById('mainContent').style.display = 'block';
-    document.getElementById('passwordSection').style.display = 'none';
+        if (data.success) {
+            // Armazena o token retornado pelo servidor
+            authToken = data.token;
+            currentUser = { username: selectedRole, role: selectedRole };
 
-    updateUserInterface();
-    updatePermissionChecks();
-    
-    // REMOVIDO: await loadFullOrdersList(); // Não carrega TUDO no login
-    // REMOVIDO: await loadSalaries();       // Carregado sob demanda
-    // REMOVIDO: await loadBoletos();        // Carregado sob demanda
-    
-    // Carrega apenas o valor de caixa e a primeira página de ordens
-    await loadCashValueFromDB(); 
-    await loadOrders(); // Carrega apenas a primeira página de ordens
-    updateUIComponentsAfterLoad(); // Redesenha a UI com os dados paginados
+            localStorage.setItem('authToken', authToken);
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
-    startAutoRefresh();
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('passwordSection').style.display = 'none';
 
-    alert(`Login realizado com sucesso! Bem-vindo ao perfil ${selectedRole}`);
-    showTab('orders', null); 
+            updateUserInterface();
+            updatePermissionChecks();
+
+            // Carrega dados iniciais
+            await loadCashValueFromDB();
+            await loadOrders();
+            updateUIComponentsAfterLoad();
+
+            startAutoRefresh();
+
+            alert(`Login realizado com sucesso! Bem-vindo ao perfil ${selectedRole}`);
+            showTab('orders', null);
+        } else {
+            alert(data.error || 'Senha incorreta!');
+            passwordInput.value = '';
+            passwordInput.focus();
+        }
+    } catch (error) {
+        console.error('Erro na autenticação:', error);
+        alert('Erro de conexão com o servidor. Tente novamente.');
+    } finally {
+        if (loginBtn) {
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = originalText;
+        }
+    }
 }
-
 // APROX. LINHA 2244: function logout() {
 function logout() {
     console.warn('🔴 [DEBUG - LOGOUT] FUNÇÃO LOGOUT CHAMADA!');
@@ -3428,7 +3296,9 @@ async function editCustomEntryData(entryId) {
             <div class="form-row">
                 <div class="form-group">
                     <label for="editEntryProcess">Processo <span class="required">*</span></label>
-                    <input type="text" id="editEntryProcess" value="${escapeForHTML(entry.process)}" list="processesList" required>
+                    <select id="editEntryProcess" name="editEntryProcess" class="form-control" required>
+                        <!-- Opções via JS -->
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="editEntryCompany">Empresa <span class="required">*</span></label>
@@ -3478,6 +3348,47 @@ async function editCustomEntryData(entryId) {
     `;
     document.body.appendChild(editModal);
     editModal.style.display = 'block';
+    
+const processSelectElement = document.getElementById('editEntryProcess');
+
+if (processSelectElement) {
+    const processNames = new Set();
+
+    // Pegando processos da tabela principal (banco)
+    if (Array.isArray(fullOrdersList)) {
+        fullOrdersList.forEach(order => {
+            if (order.process && typeof order.process === 'string' && order.process.trim() !== '') {
+                processNames.add(order.process.trim());
+            }
+        });
+    }
+
+    // (Opcional) Se quiser incluir também dos registros personalizados:
+    if (Array.isArray(customEntryData)) {
+        customEntryData.forEach(e => {
+            if (e.process && typeof e.process === 'string' && e.process.trim() !== '') {
+                processNames.add(e.process.trim());
+            }
+        });
+    }
+
+    // Reset do select
+    processSelectElement.innerHTML = '<option value="">Selecione um processo...</option>';
+
+    // Inserir opções ordenadas
+    Array.from(processNames).sort().forEach(processName => {
+        const option = document.createElement('option');
+        option.value = processName;
+        option.textContent = processName;
+
+        // Selecionar o valor atual
+        if (processName === entry.process) {
+            option.selected = true;
+        }
+
+        processSelectElement.appendChild(option);
+    });
+}
 
 // Popular o select de empresas no modal de edição
 const companySelectElement = document.getElementById('editEntryCompany');
@@ -6032,6 +5943,13 @@ function exportToPDF() {
         bodyStyles: {
             fontSize: LAYOUT.FONTS.TEXT_SMALL,
             textColor: LAYOUT.COLORS.TABLE_TEXT
+        },
+        columnStyles: {
+            1: { 
+                halign: 'right',
+                cellWidth: 30,       // 🔥 AUMENTA A LARGURA
+                overflow: 'hidden'   // 🔥 EVITA QUEBRA
+            }
         },
         alternateRowStyles: {
             fillColor: [245, 245, 245]
@@ -9164,9 +9082,6 @@ async function bulkApproveOrders(tabContext) {
             if (data.success) {
                 successfulApprovals++;
                 showModernSuccessNotification(`${successMessage} (ID: ${orderId})`, 1500);
-                if (typeof notifyBotStatusChange === 'function' && currentUser) {
-                     notifyBotStatusChange(order, oldStatus, newStatus, currentUser.username);
-                }
             } else {
                 failedApprovals.push({ id: orderId, error: data.error || 'Erro desconhecido da API.' });
             }
@@ -9256,9 +9171,6 @@ async function bulkReproveOrders(tabContext) {
             if (data.success) {
                 successfulReprovations++;
                 showModernSuccessNotification(`Ordem reprovada com sucesso! (ID: ${orderId})`, 1500);
-                if (typeof notifyBotStatusChange === 'function' && currentUser) {
-                     notifyBotStatusChange(order, oldStatus, 'Pendente', currentUser.username, reason);
-                }
             } else {
                 failedReprovations.push({ id: orderId, error: data.error || 'Erro desconhecido da API.' });
             }
@@ -9420,9 +9332,6 @@ async function bulkDeleteOrders(tabContext) {
             if (data.success) {
                 successfulDeletions++;
                 showModernSuccessNotification(`Ordem excluída com sucesso! (ID: ${orderId})`, 1500);
-                if (typeof window.whatsappScheduler !== 'undefined') {
-                    window.whatsappScheduler.cleanupEmergencyNotifications(orderId);
-                }
             } else {
                 failedDeletions.push({ id: orderId, error: data.error || 'Erro desconhecido da API.' });
             }
@@ -11902,11 +11811,6 @@ async function addOrder(event) { // <-- Recebe o 'event'
     const paymentType = document.getElementById('paymentType').value;
     const paymentValue = parseFloat(document.getElementById('paymentValue').value);
     const generationDate = document.getElementById('generationDate').value;
-    
-    // NOVO: Captura a preferência de envio de comprovante via WhatsApp
-    const sendProofToWhatsAppElement = document.querySelector('input[name="sendProofToWhatsApp"]:checked');
-    const sendProofToWhatsApp = sendProofToWhatsAppElement ? sendProofToWhatsAppElement.value === 'yes' : false;
-    console.log('DEBUG [addOrder]: Valor final de sendProofToWhatsApp antes de enviar para o backend:', sendProofToWhatsApp);
 
     // ----- NOVO CAMPO: Captura o valor da Empresa -----
     const companyElement = document.getElementById('company');
@@ -12039,12 +11943,7 @@ async function addOrder(event) { // <-- Recebe o 'event'
         boletoData: boletoData,
         boletoFileName: boletoFileName,
         boletoMimeType: boletoMimeType,
-        // === NOVO: Preferência de envio de comprovante via WhatsApp ===
-        sendProofToWhatsApp: sendProofToWhatsApp
     };
-
-    console.log('   Objeto `newOrder` final preparado para envio. Detalhes do boleto:', newOrder.boletoData ? `(${newOrder.boletoFileName}, ${ (newOrder.boletoData.length / 1024).toFixed(2) } KB)` : 'N/A');
-    console.log(`✅ [addOrder] Preferência WhatsApp capturada: sendProofToWhatsApp = ${newOrder.sendProofToWhatsApp}`);
 
 
     // 8. Verificação de Duplicidade
@@ -12054,12 +11953,12 @@ async function addOrder(event) { // <-- Recebe o 'event'
     
     if (duplicateCheck.isDuplicate) {
         hideButtonLoading(addOrderBtn, originalButtonText); // Restaura o botão para a confirmação de duplicidade
-        showDuplicateAlert(duplicateCheck.existingOrder, async (shouldContinue) => { // Callback assíncrono
+        showDuplicateAlert(duplicateCheck.existingOrder, async (shouldContinue) => {
             if (shouldContinue) {
-                showButtonLoading(addOrderBtn, 'Cadastrando...'); // Re-exibe o loading no botão
-                await proceedWithAddOrder(newOrder, addOrderBtn, originalButtonText); // Passa o botão e o texto original
+                showButtonLoading(addOrderBtn, 'Cadastrando...');
+                await proceedWithAddOrder(newOrder, addOrderBtn, originalButtonText);
             } else {
-                hideButtonLoading(addOrderBtn, originalButtonText); // Garante que o botão seja restaurado se cancelar
+                hideButtonLoading(addOrderBtn, originalButtonText);
                 console.log('Cadastro de ordem duplicada cancelado pelo usuário.');
             }
         });
@@ -12067,11 +11966,9 @@ async function addOrder(event) { // <-- Recebe o 'event'
         await proceedWithAddOrder(newOrder, addOrderBtn, originalButtonText); // Passa o botão e o texto original
     }
 }
-async function proceedWithAddOrder(orderData) {
+
+async function proceedWithAddOrder(orderData, addOrderBtn, originalButtonText) {
     console.log(`[DEBUG - proceedWithAddOrder] INÍCIO para Order ID: ${orderData.id}`);
-    console.log(`[DEBUG - proceedWithAddOrder] currentUser no início:`, currentUser); 
-    console.log(`[DEBUG - proceedWithAddOrder] authToken no início:`, authToken);     
-    
     try {
         console.log('⬆️ [proceedWithAddOrder] Enviando dados da ordem para a API:', orderData.id);
         const response = await fetch(`${API_BASE_URL}/add_order.php?_=${new Date().getTime()}`, {
@@ -12080,67 +11977,54 @@ async function proceedWithAddOrder(orderData) {
             body: JSON.stringify(orderData)
         });
         const data = await response.json();
-        
+
         if (data.success) {
             console.log('✅ [proceedWithAddOrder] Ordem sincronizada com API. Status: SUCCESS.');
-            
-            // --- MUDANÇA CRÍTICA: ADICIONA À fullOrdersList LOCALMENTE ---
-            fullOrdersList.push(orderData); // Adiciona a nova ordem ao array local
+            fullOrdersList.push(orderData);
             console.log(`✅ fullOrdersList local atualizada: Ordem ${orderData.id} adicionada.`);
 
-            // Opcional: Recarregar salários e boletos se a adição de uma ordem PUDER afetar essas listas (raro, mas para segurança)
-            // await loadSalaries();     
-            // await loadBoletos();       
-
-            // Popular datalists (eles lerão da fullOrdersList atualizada localmente)
             populateFavoredNamesDatalist();
             populateProcessesDatalist();
-            populateBoletoVendorsDatalist(); // Se o processo/favorecido do boleto está ligado a ordem
+            populateBoletoVendorsDatalist();
 
-            showModernSuccessNotification('Ordem cadastrada com sucesso!'); 
-            
-            // Chamada da função unificada para atualizar a UI
+            showModernSuccessNotification('Ordem cadastrada com sucesso!');
             updateUIComponentsAfterLoad();
 
-            // Mudar para a aba 'orders' após sucesso
             const currentActiveTab = document.querySelector('.tab-content.active');
-            if (currentActiveTab && currentActiveTab.id === 'addTab') { 
-                 showTab('orders', null); 
-                 console.log('🔄 [proceedWithAddOrder] Final: Redirecionado para a aba de Ordens (após sucesso e updates).');
+            if (currentActiveTab && currentActiveTab.id === 'addTab') {
+                showTab('orders', null);
+                console.log('🔄 [proceedWithAddOrder] Final: Redirecionado para a aba de Ordens (após sucesso e updates).');
             } else {
-                 displayOrders(); 
-                 console.log('[proceedWithAddOrder] Final: Aba de ordens atualizada.');
+                displayOrders();
+                console.log('[proceedWithAddOrder] Final: Aba de ordens atualizada.');
             }
-            console.log(`[DEBUG - proceedWithAddOrder] currentUser ANTES de clearForm:`, currentUser); 
-            console.log(`[DEBUG - proceedWithAddOrder] authToken ANTES de clearForm:`, authToken);     
-
-        } else { // Caso a API retorne sucesso: false
+        } else {
             console.warn('⚠️ [proceedWithAddOrder] Erro ao sincronizar ordem com API. Status: FAIL. Detalhes:', data.error);
-            showModernErrorNotification('Atenção: Ordem cadastrada, mas houve um erro ao sincronizar com o servidor: ' + data.error); 
-            // Em caso de erro, recarregar tudo para garantir a consistência
-            await loadFullOrdersList(); 
+            showModernErrorNotification('Atenção: Ordem cadastrada, mas houve um erro ao sincronizar com o servidor: ' + data.error);
+            await loadFullOrdersList();
             updateUIComponentsAfterLoad();
-            console.log(`[DEBUG - proceedWithAddOrder] currentUser após erro API:`, currentUser); 
-            console.log(`[DEBUG - proceedWithAddOrder] authToken após erro API:`, authToken);     
         }
-    } catch (error) { // Caso ocorra um erro de conexão
+    } catch (error) {
         console.error('❌ [proceedWithAddOrder] Erro de CONEXÃO ao enviar ordem para API:', error);
-        showModernErrorNotification('Atenção: Ordem cadastrada, mas houve um erro de conexão com o servidor. Verifique sua internet.'); 
-        // Em caso de erro de rede, recarregar tudo para restaurar dados do servidor
+        showModernErrorNotification('Atenção: Ordem cadastrada, mas houve um erro de conexão com o servidor. Verifique sua internet.');
         await loadFullOrdersList();
         updateUIComponentsAfterLoad();
-        console.log(`[DEBUG - proceedWithAddOrder] currentUser após erro CONEXÃO:`, currentUser); 
-        console.log(`[DEBUG - proceedWithAddOrder] authToken após erro CONEXÃO:`, authToken);     
     } finally {
-        // Oculta o overlay no sucesso ou falha
         hideLoadingOverlay();
+        // 🔁 RESTAURA O BOTÃO PARA O ESTADO ORIGINAL
+        hideButtonLoading(addOrderBtn, originalButtonText);
     }
-    
-    clearForm(); // Limpa o formulário de cadastro
+
+    clearForm();
     console.log('   [proceedWithAddOrder] FIM do processo de adicionar ordem.');
 }
 // Função para mostrar alerta de duplicata (VERSÃO ATUALIZADA)
 function showDuplicateAlert(existingOrder, callback) {
+        if (!existingOrder) {
+        console.error('⚠️ showDuplicateAlert chamada com existingOrder undefined. Continuando cadastro.');
+        callback(true); // Prossegue com o cadastro como se não houvesse duplicata
+        return;
+    }
     const statusText = existingOrder.status === 'Paga' ? 'PAGA' : existingOrder.status || 'PENDENTE';
     const orderGenerationDate = existingOrder.generationDate ? formatDate(existingOrder.generationDate) : 'Não informada';
     const orderPaymentForecast = existingOrder.paymentForecast ? formatDate(existingOrder.paymentForecast) : 'Não informada'; // NOVO
@@ -12176,12 +12060,6 @@ function clearForm() {
         document.getElementById('company').value = ''; // Adicione esta linha
         document.getElementById('otherSolicitantGroup').style.display = 'none';
         
-        // === NOVO: Reset da preferência WhatsApp para 'Não' ===
-        const sendProofNo = document.getElementById('sendProofNo');
-        if (sendProofNo) {
-            sendProofNo.checked = true;
-        }
-        // === FIM NOVO ===
     }
     const sendProofYes = document.getElementById('sendProofYes'); // Ou sendProofNo se for o padrão inicial
     if (sendProofYes) {
@@ -12649,10 +12527,6 @@ async function deleteOrder(orderId) {
             }
             // --- FIM DA MUDANÇA (REMOVE loadFullOrdersList() daqui) ---
 
-            // 4. Limpeza de agendamentos do WhatsApp (se a ordem era de emergência)
-            if (typeof window.whatsappScheduler !== 'undefined') {
-                window.whatsappScheduler.cleanupEmergencyNotifications(orderId);
-            }
             // Chama a função unificada de atualização de UI para redesenhar o que for necessário
             updateUIComponentsAfterLoad();
 
@@ -13128,11 +13002,6 @@ async function approveOrderDiretoria(orderId) {
         if (data.success) {
             console.log('✅ Aprovação da diretoria sincronizada com API.');
             await loadFullOrdersList(); // CRÍTICO: Recarrega a fonte de verdade após a atualização
-
-            if (typeof notifyBotStatusChange === 'function' && currentUser) {
-                const updatedOrder = fullOrdersList.find(o => o.id === orderId); // Pega a ordem atualizada da lista completa
-                notifyBotStatusChange(updatedOrder, 'Pendente', 'Aguardando Financeiro', currentUser.username);
-            }
         } else {
             console.warn('⚠️ Erro ao sincronizar aprovação da diretoria com API:', data.error);
             alert('Atenção: Aprovação registrada, mas houve um erro ao sincronizar com o servidor: ' + data.error);
@@ -13216,10 +13085,7 @@ async function disapproveOrderDiretoria(event, orderId) { // <<< Adicionado 'eve
         if (data.success) {
             console.log('✅ Reprovação da diretoria sincronizada com API. Atualizando UI localmente...');
             showModernSuccessNotification('Ordem reprovada e retornada para revisão!'); 
-            
-            if (typeof notifyBotStatusChange === 'function' && currentUser) {
-                notifyBotStatusChange(order, oldStatus, 'Pendente', currentUser.username, reason);
-            }
+
             updateUIComponentsAfterLoad('diretoria'); // <<< Passa o nome da aba explicitamente
 
         } else {
@@ -13301,21 +13167,7 @@ async function approveOrderFinanceiro(event, orderId) { // <<< Adicionado 'event
             console.log('✅ Aprovação do financeiro sincronizada com API.');
             showModernSuccessNotification('Ordem aprovada pelo Financeiro!');
 
-            if (order && (order.priority?.toLowerCase() === 'emergencia' || order.priority?.toLowerCase() === 'emergência') && order.direction === 'Marina') {
-                if (window.whatsappScheduler && typeof window.whatsappScheduler.sendEmergencyNotificationApprovedByFinanceiro === 'function') {
-                    await window.whatsappScheduler.sendEmergencyNotificationApprovedByFinanceiro(order);
-                    groupEmergencyNotificationSent = true;
-                } else {
-                    console.warn('⚠️ [script.js] whatsappScheduler.sendEmergencyNotificationApprovedByFinanceiro não disponível para notificar emergência aprovada.');
-                }
-            }
-            
-            if (typeof notifyBotStatusChange === 'function' && currentUser) {
-                notifyBotStatusChange(order, oldStatus, 'Aguardando Pagamento', currentUser.username, null, null, groupEmergencyNotificationSent);
-            }
-
-            updateUIComponentsAfterLoad('financeiro'); // <<< Passa o nome da aba explicitamente
-
+            updateUIComponentsAfterLoad('financeiro');
         } else {
             console.warn('⚠️ Erro ao sincronizar aprovação do financeiro com API:', data.error);
             showModernErrorNotification('Atenção: Houve um erro ao sincronizar a aprovação com o servidor: ' + (data.error || 'Erro desconhecido'));
@@ -13328,8 +13180,7 @@ async function approveOrderFinanceiro(event, orderId) { // <<< Adicionado 'event
         await loadFullOrdersList(true);
         updateUIComponentsAfterLoad('financeiro');
     } finally {
-        hideButtonLoading(button, originalButtonText); // <<< RESTAURA O BOTÃO AQUI!
-        // hideLoadingOverlay(); // <<< REMOVER ESTA LINHA se presente
+        hideButtonLoading(button, originalButtonText); 
     }
 }
 
@@ -13395,10 +13246,6 @@ async function disapproveOrderFinanceiro(event, orderId) { // <<< Adicionado 'ev
         if (data.success) {
             console.log('✅ Reprovação do financeiro sincronizada com API.');
             showModernSuccessNotification('Ordem reprovada e retornada para revisão!');
-            
-            if (typeof notifyBotStatusChange === 'function' && currentUser) {
-                notifyBotStatusChange(order, oldStatus, 'Pendente', currentUser.username, reason);
-            }
 
             updateUIComponentsAfterLoad('financeiro'); // <<< Passa o nome da aba explicitamente
 
@@ -13714,29 +13561,8 @@ async function registerPayment() {
                         console.log('%c[DEBUG registerPayment] API retornou sucesso. Processando atualizações pós-API...', 'color: #28a745; font-weight: bold;');
                         
                         await loadCashValueFromDB(); // Recarrega o valor do caixa do DB
+                        await fetchPaidOrdersForReports(); // Força a atualização dos Dados
                         
-                        // Notificação WhatsApp (se a ordem se tornou paga nesta transação)
-                        if (orderBecamePaid && order.sendProofToWhatsApp && typeof window.whatsappScheduler !== 'undefined' && typeof window.whatsAppIntegration !== 'undefined' && window.whatsAppIntegration.isInitialized && order.payments.length > 0) {
-                            try {
-                                const lastPaymentIndex = order.payments.length - 1;
-                                const proofLink = `${API_BASE_URL}/download_payment_proof.php?order_id=${order.id}&payment_index=${lastPaymentIndex}`;
-                                window.whatsappScheduler.notifyPaymentCompleted(order, proofLink);
-                                console.log(`[DEBUG - registerPayment] Notificação de pagamento via WhatsApp AGENDADA para Order ID: ${order.id}`);
-                            } catch (error) {
-                                console.error('❌ [script.js] Erro ao enviar notificação de pagamento via WhatsApp:', error);
-                            }
-                        } else if (orderBecamePaid) {
-                            console.warn('⚠️ [registerPayment] Condições para envio de WhatsApp NÃO atendidas. Notificação de pagamento NÃO enviada. (Faltando link? sendProofToWhatsApp=false? Scheduler não inicializado?)');
-                        }
-                    
-                        if (typeof window.whatsappScheduler !== 'undefined') {
-                            window.whatsappScheduler.cleanupEmergencyNotifications(order.id);
-                        }
-                        await fetchPaidOrdersForReports(); // Força a atualização dos dados para relatórios de pagos
-                        
-                        // --- CHAMADA FINAL PARA ATUALIZAR A INTERFACE ---
-                        // Esta função irá forçar o carregamento de `fullOrdersList` do servidor
-                        // e redesenhar todas as abas, incluindo "Ordens Pendentes" e "Ordens Pagas".
                         console.log(`%c[DEBUG - registerPayment] Chamando updateUIComponentsAfterLoad() após sucesso da API para redesenho completo da UI.`, 'color: #f57c00; font-weight: bold;');
                         updateUIComponentsAfterLoad();
 
@@ -14415,40 +14241,56 @@ async function viewPaidItemDetails(id, itemType, parcelId = null) {
 // NOVO: Renderiza a seção de um comprovante/arquivo (reutilizável)
 // O `base64Data` pode ser `null`, indicando que o arquivo deve ser buscado via API
 async function renderProofSection(base64Data, fileName, mimeType, title, itemId, type, parcelId = null) {
+
     let finalBase64Data = base64Data;
     let finalFileName = fileName;
     let finalMimeType = mimeType;
-    let fetchFromDbOnClick = false; // Flag para indicar se o JS deve buscar o arquivo ao clicar
-    let idForFetch = itemId; // ID a ser usado para buscar (boleto_id ou parcel_id)
+    let fetchFromDbOnClick = false;
+    let idForFetch = itemId;
 
-    // Se `base64Data` é null, os botões deverão chamar as funções que buscam do DB
     if (!finalBase64Data && (type === 'boleto_original_from_db' || type === 'payment_proof_boleto_parcel')) {
         fetchFromDbOnClick = true;
-        if (type === 'payment_proof_boleto_parcel') idForFetch = parcelId; // Se for comprovante de parcela
+        if (type === 'payment_proof_boleto_parcel') idForFetch = parcelId;
     }
-    
-    // HTML da seção de comprovante
+
     let proofSectionHtml = `
         <div class="details-attachment-card">
             <h3><i class="icon-attachment"></i> ${title}</h3>
     `;
-    
-    if (finalFileName) { // Se pelo menos o nome do arquivo for conhecido
-        const sizeString = finalBase64Data ? `(${getFileSizeFromBase64(finalBase64Data)} MB)` : '';
+
+    if (finalFileName) {
+        const sizeString = finalBase64Data ? `${getFileSizeFromBase64(finalBase64Data)} MB` : '';
+        
+        // Construir as chamadas de função como STRINGS
+        let viewButtonOnclick = '';
+        let downloadButtonOnclick = '';
+
+        if (fetchFromDbOnClick) {
+            // Se precisa buscar do DB
+            viewButtonOnclick = `viewFile(null, null, '${escapeForHTML(finalFileName)}', '${escapeForHTML(idForFetch)}')`;
+            downloadButtonOnclick = `downloadFile(null, null, '${escapeForHTML(finalFileName)}', '${escapeForHTML(idForFetch)}')`;
+        } else {
+            // Se tem os dados diretos
+            viewButtonOnclick = `viewFileInNewTab('${escapeForHTML(finalBase64Data)}', '${escapeForHTML(finalMimeType)}', '${escapeForHTML(finalFileName)}')`;
+            downloadButtonOnclick = `downloadFileFromBase64('${escapeForHTML(finalBase64Data)}', '${escapeForHTML(finalFileName)}', '${escapeForHTML(finalMimeType)}')`;
+        }
+
         proofSectionHtml += `
             <div class="details-attachment-info">
                 <span class="details-attachment-filename">${escapeForHTML(finalFileName)}</span>
                 <span class="details-attachment-size">${sizeString}</span>
             </div>
             <div class="details-attachment-actions">
-                <button class="btn btn-info btn-view" onclick="${fetchFromDbOnClick ? `viewFile(null, null, '${escapeForHTML(finalFileName)}', '${escapeForHTML(idForFetch)}')` : `viewFileInNewTab('${escapeForHTML(finalBase64Data)}', '${escapeForHTML(finalMimeType)}', '${escapeForHTML(finalFileName)}')`}"><i class="fas fa-eye"></i> Visualizar</button>
-                <button class="btn btn-success btn-download" onclick="${fetchFromDbOnClick ? `downloadFile(null, null, '${escapeForHTML(finalFileName)}', '${escapeForHTML(idForFetch)}')` : `downloadFileFromBase64('${escapeForHTML(finalBase64Data)}', '${escapeForHTML(finalFileName)}', '${escapeForHTML(finalMimeType)}')`}"><i class="fas fa-download"></i> Baixar</button>
+                <button class="btn btn-info btn-view" onclick="${viewButtonOnclick}"><i class="fas fa-eye"></i> Visualizar</button>
+                <button class="btn btn-success btn-download" onclick="${downloadButtonOnclick}"><i class="fas fa-download"></i> Baixar</button>
             </div>
         `;
     } else {
         proofSectionHtml += `<p>Nenhum ${title.toLowerCase()} disponível.</p>`;
     }
+
     proofSectionHtml += `</div>`;
+
     return proofSectionHtml;
 }
 
@@ -14469,28 +14311,116 @@ function renderPaymentHistorySection(payments, orderId) {
                     </thead>
                     <tbody>
     `;
+
     payments.forEach((p, index) => {
+        let proofButtons = 'N/A';
+        
+        if (p.proofData) {
+            const mimeType = getMimeTypeFromBase64(p.proofData);
+            const fileName = `Comprovante_Pagto_Parcial_${orderId}_${index + 1}.pdf`;
+            
+            proofButtons = `
+                <button class="btn btn-info btn-small" onclick="viewFileInNewTab('${escapeForHTML(p.proofData)}', '${escapeForHTML(mimeType)}', '${escapeForHTML(fileName)}')">
+                    <i class="fas fa-eye"></i> Ver
+                </button>
+                <button class="btn btn-success btn-small" onclick="downloadFileFromBase64('${escapeForHTML(p.proofData)}', '${escapeForHTML(fileName)}', '${escapeForHTML(mimeType)}')">
+                    <i class="fas fa-download"></i> Baixar
+                </button>
+            `;
+        }
+
         historyHtml += `
             <tr>
                 <td>${formatCurrency(p.amount)}</td>
                 <td>${formatDate(p.date)}</td>
                 <td>${escapeForHTML(p.description || 'N/A')}</td>
-                <td>
-                    ${p.proofData ? 
-                        `<button class="btn btn-info btn-small" onclick="viewFileInNewTab('${escapeForHTML(p.proofData)}', '${escapeForHTML(getMimeTypeFromBase64(p.proofData))}', 'Comprovante_Pagto_Parcial_${orderId}_${index+1}.pdf')"><i class="fas fa-eye"></i> Ver</button>
-                         <button class="btn btn-success btn-small" onclick="downloadFileFromBase64('${escapeForHTML(p.proofData)}', 'Comprovante_Pagto_Parcial_${orderId}_${index+1}.pdf', '${escapeForHTML(getMimeTypeFromBase64(p.proofData))}')"><i class="fas fa-download"></i> Baixar</button>`
-                        : `N/A`}
-                </td>
+                <td>${proofButtons}</td>
             </tr>
         `;
     });
+
     historyHtml += `
                     </tbody>
                 </table>
             </div>
         </div>
     `;
+
     return historyHtml;
+}
+
+/**
+ * Visualizar arquivo Base64 em nova aba
+ */
+function viewFileInNewTab(base64Data, mimeType, fileName) {
+    try {
+        if (!base64Data) {
+            alert('Dados do arquivo não disponíveis.');
+            return;
+        }
+
+        const newWindow = window.open('', '_blank');
+        if (!newWindow) {
+            alert('Pop-up bloqueado. Permita pop-ups para visualizar.');
+            return;
+        }
+
+        if (mimeType.includes('pdf')) {
+            newWindow.document.write(`
+                <html>
+                    <head><title>${escapeForHTML(fileName)}</title></head>
+                    <body style="margin: 0;">
+                        <embed src="${base64Data}" type="application/pdf" width="100%" height="100%">
+                    </body>
+                </html>
+            `);
+        } else if (mimeType.includes('image')) {
+            newWindow.document.write(`
+                <html>
+                    <head><title>${escapeForHTML(fileName)}</title></head>
+                    <body style="margin: 0; text-align: center; background: #f0f0f0;">
+                        <img src="${base64Data}" style="max-width: 100%; height: auto;">
+                    </body>
+                </html>
+            `);
+        } else {
+            newWindow.close();
+            downloadFileFromBase64(base64Data, fileName, mimeType);
+        }
+        
+        newWindow.document.close();
+    } catch (error) {
+        console.error('Erro ao visualizar arquivo:', error);
+        alert('Erro ao visualizar arquivo.');
+    }
+}
+
+/**
+ * Baixar arquivo Base64
+ */
+function downloadFileFromBase64(base64Data, fileName, mimeType) {
+    try {
+        if (!base64Data) {
+            alert('Dados do arquivo não disponíveis.');
+            return;
+        }
+
+        const link = document.createElement('a');
+        link.href = base64Data;
+        link.download = fileName
+            .replace(/&#039;/g, "'")
+            .replace(/&quot;/g, '"')
+            .replace(/&amp;/g, "&");
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showDownloadFeedback(fileName);
+    } catch (e) {
+        console.error('Erro ao baixar arquivo:', e);
+        alert('Erro ao baixar arquivo.');
+    }
 }
 
 // `highlightParcelId` é o ID da parcela que está sendo visualizada no momento (para destaque)
@@ -15046,6 +14976,27 @@ function exportPaidToExcel() {
         }).join(delimiter) + '\n';
         
         csvContent += row;
+        
+        const paidValue = parseFloat(item.paidAmount || 0);
+
+        // Soma geral
+        grandTotalPaid += paidValue;
+
+        // Soma por tipo
+        if (item.paymentType === 'boleto_parcel') {
+            totalBoletosPaid += paidValue;
+
+        // Soma por processo (boletos)
+        const current = processBoletosOnlySums.get(item.process) || 0;
+        processBoletosOnlySums.set(item.process, current + paidValue);
+
+        } else if (item.paymentType === 'order') {
+            totalOrdersOnlyPaid += paidValue;
+
+        // Soma por processo (ordens)
+        const current = processOrdersOnlySums.get(item.process) || 0;
+        processOrdersOnlySums.set(item.process, current + paidValue);
+        }
 
     });
 
@@ -17514,29 +17465,19 @@ function parseMonetaryValue(input) {
     return isNaN(result) ? 0 : parseFloat(result.toFixed(2));
 }
 
-function clearBoletoForm() {
+function clearBoletoForm() { 
     console.log('🧹 Limpando formulário de boleto...');
     
     const fieldsToClear = [
-        'boletoVendor',
-        'boletoProcess',
-        'boletoDirection',
-        'boletoCompany',
-        'boletoObservation',
-        'singleParcelValue',
-        'singleParcelDueDate',
-        'boletoFileAttachment',
-        'boletoGenerationDateDisplay' // Campo readonly
+        'boletoVendor', 'boletoProcess', 'boletoDirection',
+        'boletoCompany', 'boletoObservation', 'singleParcelValue',
+        'singleParcelDueDate', 'boletoFileAttachment', 'boletoGenerationDateDisplay'
     ];
     
     fieldsToClear.forEach(fieldId => {
         const element = document.getElementById(fieldId);
         if (element) {
-            if (element.type === 'file') {
-                element.value = '';
-            } else {
-                element.value = '';
-            }
+            element.value = '';
         } else {
             console.warn(`Campo ${fieldId} não encontrado - ignorado.`);
         }
@@ -17546,6 +17487,12 @@ function clearBoletoForm() {
     const boletoFilePreview = document.getElementById('boletoFilePreview');
     if (boletoFilePreview) {
         boletoFilePreview.style.display = 'none';
+    }
+    
+    // Remover classe de validação do input file
+    const fileInput = document.getElementById('boletoFileAttachment');
+    if (fileInput) {
+        fileInput.classList.remove('is-valid');
     }
     
     // Resetar parcelamento
@@ -17564,10 +17511,10 @@ function clearBoletoForm() {
         multipleParcelRadio.checked = false;
     }
     
-    // ✅ Inicializar data fixa
+    // Inicializar data fixa
     initializeBoletoGenerationDate();
     
-    // ✅ Recarregar empresas
+    // Recarregar empresas
     populateBoletoCompanySelect();
     
     // Resetar contador de parcelas
@@ -17580,6 +17527,7 @@ function clearBoletoForm() {
     
     console.log('✅ Formulário de boleto limpo com sucesso.');
 }
+
 let _cachedBoletoFilters = null;
 let _cachedBoletosForDisplay = null;
 
@@ -18783,7 +18731,9 @@ async function editBoleto(boletoId) {
 
                     <label for="editBoletoVendor">Fornecedor <span class="required">*</span></label>
 
-                    <input type="text" id="editBoletoVendor" value="${boleto.vendor}" required>
+                    <select id="editBoletoVendor" required>
+                        <option value="">Selecione um fornecedor...</option>
+                    </select>
 
                 </div>
 
@@ -18799,7 +18749,9 @@ async function editBoleto(boletoId) {
 
                     <label for="editBoletoProcess">Processo (Ex: Cidade) <span class="required">*</span></label>
 
-                    <input type="text" id="editBoletoProcess" value="${boleto.process}" placeholder="Ex: São Paulo" required>
+                    <select id="editBoletoProcess" required>
+                        <option value="">Selecione um processo...</option>
+                    </select>
 
                 </div>
 
@@ -18914,6 +18866,8 @@ async function editBoleto(boletoId) {
     
     document.getElementById('editBoletoForm').innerHTML = editFormHtml;
     populateEditBoletoCompanySelect();
+    populateEditBoletoVendorSelect(boleto.vendor);
+    populateEditBoletoProcessSelect(boleto.process);
     
     setTimeout(() => {
         const companySelect = document.getElementById('editBoletoCompany');
@@ -18927,6 +18881,68 @@ async function editBoleto(boletoId) {
     if (boleto.parcels.length > 1) {
         boleto.parcels.forEach(p => addEditParcelField(p.value, p.dueDate, p.id, p.isPaid));
     }
+}
+
+function populateEditBoletoVendorSelect(selectedVendor = '') {
+    const select = document.getElementById('editBoletoVendor');
+    if (!select) return;
+
+    const vendors = new Set();
+
+    // Pegar fornecedores da tabela de boletos
+    if (Array.isArray(boletos)) {
+        boletos.forEach(b => {
+            if (b.vendor && typeof b.vendor === 'string' && b.vendor.trim() !== '') {
+                vendors.add(b.vendor.trim());
+            }
+        });
+    }
+
+    select.innerHTML = '<option value="">Selecione um fornecedor...</option>';
+
+    Array.from(vendors).sort((a, b) => a.localeCompare(b, 'pt-BR'))
+    .forEach(vendor => {
+        const option = document.createElement('option');
+        option.value = vendor;
+        option.textContent = vendor;
+
+        if (vendor === selectedVendor) {
+            option.selected = true;
+        }
+
+        select.appendChild(option);
+    });
+}
+
+function populateEditBoletoProcessSelect(selectedProcess = '') {
+    const select = document.getElementById('editBoletoProcess');
+    if (!select) return;
+
+    const processes = new Set();
+
+    // Pegar processos da tabela principal (ordens)
+    if (Array.isArray(fullOrdersList)) {
+        fullOrdersList.forEach(order => {
+            if (order.process && typeof order.process === 'string' && order.process.trim() !== '') {
+                processes.add(order.process.trim());
+            }
+        });
+    }
+
+    select.innerHTML = '<option value="">Selecione um processo...</option>';
+
+    Array.from(processes).sort((a, b) => a.localeCompare(b, 'pt-BR'))
+    .forEach(proc => {
+        const option = document.createElement('option');
+        option.value = proc;
+        option.textContent = proc;
+
+        if (proc === selectedProcess) {
+            option.selected = true;
+        }
+
+        select.appendChild(option);
+    });
 }
 
 function populateBoletoCompanySelect() {
@@ -19983,7 +19999,7 @@ function exportBoletosToPDF() {
             TABLE_HEADER_ALT: [70, 130, 180],
             TABLE_HEADER_PREVIEW: [0, 123, 255] 
         },
-        
+
         // Espaçamentos padronizados
         SPACING: {
             AFTER_TITLE_MAIN: 15,     
@@ -19992,7 +20008,7 @@ function exportBoletosToPDF() {
             AFTER_TEXT: 5,             
             AFTER_TABLE: 15,          
             BETWEEN_SECTIONS: 20,     
-            LINE_HEIGHT: 7           
+            LINE_HEIGHT: 7
         }
     };
   
@@ -20139,7 +20155,8 @@ function exportBoletosToPDF() {
             textColor: [255, 255, 255],
             fontSize: LAYOUT.FONTS.TEXT_SMALL,
             fontStyle: 'bold'
-        }
+        },
+
     });
     
     currentY = doc.autoTable.previous.finalY + LAYOUT.SPACING.AFTER_TABLE;
@@ -21483,170 +21500,6 @@ function mostrarOrdensArquivadas() {
             '👁️ Ver Arquivadas';
         botao.style.background = estaOculta ? '#ff9800' : '#4caf50';
     }
-}
-
-
-// Função para disparar eventos personalizados que o bot pode escutar (se necessário no futuro)
-function dispatchOrderEvent(eventType, orderData, extraData = {}) {
-    if (typeof CustomEvent === 'function') { // Garante compatibilidade
-        const event = new CustomEvent(eventType, {
-            detail: { order: orderData, ...extraData }
-        });
-        document.dispatchEvent(event);
-        console.log(`📡 [Sistema] Evento disparado: ${eventType} para ordem ${orderData.id}`);
-    } else {
-        console.warn(`⚠️ [Sistema] CustomEvent não suportado. Evento ${eventType} não disparado.`);
-    }
-}
-
-// Função para notificar o bot sobre nova ordem de emergência
-function notifyBotNewEmergencyOrder(order) {
-    if (order.priority?.toLowerCase() === 'emergencia' || order.priority?.toLowerCase() === 'emergência') {
-        // Notifica através do WhatsAppScheduler
-        // CORRIGIDO: Chamar a instância global do scheduler e o método correto.
-        if (window.whatsappScheduler && typeof window.whatsappScheduler.notifyNewEmergencyOrder === 'function') {
-            window.whatsappScheduler.notifyNewEmergencyOrder(order);
-        } else {
-            console.warn('⚠️ [Sistema] whatsappScheduler.notifyNewEmergencyOrder não disponível para notificar nova emergência.');
-        }
-        
-        // Notifica administradores via WhatsAppBotIntegration (se o bot estiver inicializado)
-        // Se window.whatsappBotIntegration for undefined ou não inicializado, este warning aparecerá.
-        if (window.whatsappBotIntegration && window.whatsappBotIntegration.isInitialized && typeof window.whatsappBotIntegration.sendAdminNotification === 'function') {
-            const adminMessage = `🚨 **NOVA EMERGÊNCIA CADASTRADA**\n\n` +
-                               `**ID:** ${order.id}\n` +
-                               `**Favorecido:** ${order.favoredName}\n` +
-                               `**Valor:** R$ ${parseFloat(order.paymentValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
-                               `**Solicitante:** ${order.solicitant}\n\n` +
-
-            window.whatsappBotIntegration.sendAdminNotification(adminMessage);
-        } else {
-            console.warn('⚠️ [Sistema] WhatsAppBotIntegration ou sendAdminNotification não disponíveis para notificar admin sobre nova emergência.');
-        }
-    }
-}
-
-// wscheduler.js (ou onde a função notifyBotStatusChange está definida)
-function notifyBotStatusChange(order, oldStatus, newStatus, actorName = 'Sistema', reason = null, proofLink = null, groupEmergencyNotificationSent = false) {
-    // Dispara evento para o bot escutar
-    // Dentro de notifyBotStatusChange
-    if (typeof dispatchOrderEvent === 'function') {
-        dispatchOrderEvent('orderStatusChanged', order, { oldStatus, newStatus, actorName, reason, proofLink }); 
-    }
-    // Notificações específicas baseadas no status
-    // Garante que o whatsappBotIntegration esteja inicializado e os comandos do bot disponíveis
-    if (window.whatsappBotIntegration && window.whatsappBotIntegration.isInitialized && typeof window.WhatsAppBotCommands !== 'undefined') {
-        let message = '';
-        let targetPhone = null; // Telefone padrão para o solicitante, se aplicável
-        // marinaPhone não será mais usado diretamente aqui para evitar confusão
-
-        // 1. Tenta encontrar o telefone do solicitante (para notificações gerais)
-        if (order.solicitant) {
-            targetPhone = findContactPhoneByName(order.solicitant, 'solicitante');
-        }
-
-        // --- Lógica para Notificações de Status ---
-        // Se a ordem foi paga, a notificação é tratada separadamente e não precisa de outras mensagens de status
-        if (newStatus === 'Paga') {
-             if (window.whatsappScheduler && typeof window.whatsappScheduler.notifyPaymentCompleted === 'function') {
-                 window.whatsappScheduler.notifyPaymentCompleted(order, proofLink);
-                 console.log(`🤖 [Bot Integration] Notificação de pagamento para ${order.favoredName} tratada por WhatsAppScheduler.`);
-                 return; // Já foi notificado, sai da função
-             }
-        }
-
-        switch (newStatus) {
-            case 'Aguardando Financeiro': // Notificação para o solicitante quando a Diretoria aprova
-                message = `✅ **ORDEM APROVADA PELA DIRETORIA**\n\n` +
-                         `**ID:** ${order.id}\n` +
-                         `**Favorecido:** ${order.favoredName}\n` +
-                         `**Valor:** R$ ${parseFloat(order.paymentValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
-                         `Sua ordem foi aprovada pela Diretoria (${actorName}) e segue para análise financeira.`;
-                // Envia para o solicitante
-                if (message && targetPhone) {
-                    window.WhatsAppBotCommands.sendNotification(targetPhone, message);
-                    console.log(`🤖 [Bot Integration] Notificação de status '${newStatus}' para solicitante ${order.solicitant} (${targetPhone}).`);
-                } else if (message) {
-                    console.warn(`⚠️ [Bot Integration] Não foi possível encontrar telefone para solicitante '${order.solicitant}' para notificação de status '${newStatus}'.`);
-                }
-                break;
-                
-            case 'Pendente': // Notificação para o solicitante quando a ordem é rejeitada e retorna a Pendente
-            case 'Rejeitada': // Se o fluxo explícita Rejeitada
-                message = `❌ **ORDEM REJEITADA**\n\n` +
-                         `**ID:** ${order.id}\n` +
-                         `**Favorecido:** ${order.favoredName}\n` +
-                         `**Perfil:** ${actorName}\n` +
-                         `**Motivo:** ${reason || 'Não especificado'}\n\n` +
-                         `Entre em contato para mais informações.`;
-                // Envia para o solicitante
-                if (message && targetPhone) {
-                    window.WhatsAppBotCommands.sendNotification(targetPhone, message);
-                    console.log(`🤖 [Bot Integration] Notificação de status '${newStatus}' para solicitante ${order.solicitant} (${targetPhone}).`);
-                } else if (message) {
-                    console.warn(`⚠️ [Bot Integration] Não foi possível encontrar telefone para solicitante '${order.solicitant}' para notificação de status '${newStatus}'.`);
-                }
-                break;
-                
-            case 'Aguardando Pagamento': // FINANCEIRO APROVA -> ORDEM VAI PARA PENDENTES PAGAMENTO
-                // 1. Notificação para o SOLICITANTE (informando que a ordem foi aprovada para pagamento)
-                let messageToSolicitant = `💳 **ORDEM LIBERADA PARA PAGAMENTO**\n\n` +
-                                           `**ID:** ${order.id}\n` +
-                                           `**Favorecido:** ${order.favoredName}\n` +
-                                           `**Valor:** R$ ${parseFloat(order.paymentValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
-                                           `Sua ordem foi liberada pelo Financeiro (${actorName}) e está na fila de pagamento.`;
-                if (messageToSolicitant && targetPhone) {
-                    window.WhatsAppBotCommands.sendNotification(targetPhone, messageToSolicitant);
-                    console.log(`🤖 [Bot Integration] Notificação para solicitante ${order.solicitant} (${targetPhone}) sobre 'Aguardando Pagamento'.`);
-                } else if (messageToSolicitant) {
-                    console.warn(`⚠️ [Bot Integration] Não foi possível encontrar telefone para solicitante '${order.solicitant}' para notificação 'Aguardando Pagamento'.`);
-                }
-
-                // 2. Notificação ESPECÍFICA e PRIORITÁRIA para MARINA (se a ordem for de emergência e direcionada a ela)
-                // ENVIAR SOMENTE SE A NOTIFICAÇÃO DE GRUPO JÁ NÃO FOI ENVIADA.
-                if (!groupEmergencyNotificationSent && (order.priority?.toLowerCase() === 'emergencia' || order.priority?.toLowerCase() === 'emergência') && order.direction === 'Marina') {
-                    if (window.whatsappScheduler && typeof window.whatsappScheduler.notifyEmergencyOrdersToMarina === 'function') {
-                         window.whatsappScheduler.notifyEmergencyOrdersToMarina(order); // Passa a ordem para o scheduler
-                         console.log(`   [Bot Integration] Notificação de EMERGÊNCIA ESPECÍFICA para Marina tratada por WhatsAppScheduler.`);
-                    } else { // Fallback se a função não existir ou o scheduler não estiver pronto
-                        console.warn(`⚠️ [Bot Integration] Ordem de emergência para Marina (${order.id}), mas whatsappScheduler.notifyEmergencyOrdersToMarina não disponível.`);
-                        // Se quiser um fallback para enviar diretamente aqui, adicione. Mas o ideal é que o scheduler a trate.
-                    }
-                } else if (groupEmergencyNotificationSent && (order.priority?.toLowerCase() === 'emergencia' || order.priority?.toLowerCase() === 'emergência') && order.direction === 'Marina') {
-                    console.log(`ℹ️ [Bot Integration] Ordem de emergência para Marina (${order.id}) aprovada pelo Financeiro. Notificação específica para Marina PULADA porque a notificação de grupo JÁ FOI ENVIADA.`);
-                }
-                break;
-            // Outros status podem ser adicionados conforme necessário
-        }
-    }
-}
-
-// Função auxiliar para encontrar o telefone de um contato pelo nome e papel
-function findContactPhoneByName(contactName, role = null) {
-    // É crucial que 'window.whatsappBot' e 'window.whatsappBot.userPINs' estejam populados
-    // Isso acontece na inicialização do seu WhatsApp Bot Integration
-    if (!window.whatsappBot || !window.whatsappBot.userPINs) {
-        console.warn('⚠️ [Bot Integration] whatsappBot ou userPINs não disponíveis para encontrar contato.');
-        return null;
-    }
-    
-    const normalizedName = contactName.toLowerCase().trim();
-    
-    for (const pin in window.whatsappBot.userPINs) {
-        const userData = window.whatsappBot.userPINs[pin];
-        const userName = userData.name.toLowerCase().trim();
-        
-        // Verifica se o papel é especificado e se corresponde
-        if (role && userData.role.toLowerCase() !== role.toLowerCase()) {
-            continue;
-        }
-
-        // Verifica se o nome do contato está contido no nome buscado (ou vice-versa para flexibilidade)
-        if (normalizedName.includes(userName) || userName.includes(normalizedName)) {
-            return userData.phone;
-        }
-    }
-    return null;
 }
 
 function debounce(func, delay) {

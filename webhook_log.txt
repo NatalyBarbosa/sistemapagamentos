@@ -1,2 +1,0 @@
-2026-03-16 08:26:40 [INIT] Iniciando execução de webhook_whatsapp.php
-2026-03-16 08:26:40 [INFO] Webhook GET request received.

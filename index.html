@@ -520,21 +520,10 @@
                         <textarea id="observation" rows="3" placeholder="Qualquer observação relevante"></textarea>
                     </div>
 
-                    <!-- NOVO: Campo de preferência para enviar comprovante via WhatsApp -->
-                    <div class="form-group">
-                        <label>Enviar Comprovante de Pagamento via WhatsApp?</label>
-                        <div>
-                            <input type="radio" id="sendProofYes" name="sendProofToWhatsApp" value="yes" checked>
-                            <label for="sendProofYes">Sim</label>
-                            <input type="radio" id="sendProofNo" name="sendProofToWhatsApp" value="no">
-                            <label for="sendProofNo">Não</label>
-                        </div>
-                    </div>
-
                     <div class="form-actions">
                         <button type="button" class="btn btn-success" id="addOrderBtn" onclick="addOrder(event)">Cadastrar Ordem</button>
                         <button type="button" class="btn btn-secondary" onclick="clearForm()">Limpar Formulário</button>
-                    </div>z
+                    </div>
                 </form>
             </div>
             <!-- Fechamento da addTab -->
@@ -1064,164 +1053,128 @@
                 </div>
             </div>
 
-            <!-- Aba: Dados de Saída (Dashboard + Relatório) -->
-            <div id="reportsTab" class="tab-content">
-                <h2>Dashboard de Dados de Saída</h2>
+           <!-- Aba: Dados de Saída (Dashboard + Relatório) -->
+<div id="reportsTab" class="tab-content">
+    <h2 style="margin-bottom: 20px; color: #333; font-weight: 600;">Dashboard de Dados de Saída</h2>
 
-                <!-- Container de Controles e Filtros do Dashboard -->
-                <div class="dashboard-controls-container filter-panel">
-                    <div class="filter-header">
-                        <i class="fas fa-search icon-primary"></i> <!-- Ícone de Lupa para o cabeçalho -->
-                        <h1>Filtros do Dashboard</h1>
-                    </div>
+    <!-- Container Expandido de Controles e Filtros do Dashboard -->
+    <div id="dashboardControlsContainer" class="dashboard-controls-container filter-panel" style="width: 100%; max-width: 1200px; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid #dee2e6;">
+        
+        <!-- Cabeçalho Expandido dos Filtros -->
+        <div class="filter-header" style="display: flex; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #007bff;">
+            <i class="fas fa-search icon-primary" style="font-size: 1.5em; color: #007bff; margin-right: 10px;"></i>
+            <h3 style="margin: 0; color: #007bff; font-size: 1.3em; font-weight: 600;">Filtros do Dashboard</h3>
+        </div>
 
-                    <!-- SELECTORES DE MÊS INICIAL/FINAL -->
-                    <div id="dashboardMonthYearFilters" class="form-group-row" style="align-items: flex-end; gap: 10px; margin-bottom: 20px;">
-                        <div class="form-group">
-                            <label for="dashboardStartMonthSelect">Mês Inicial:</label>
-                            <div style="display:flex; gap: 5px;">
-                                <select id="dashboardStartMonthSelect" class="custom-select" style="flex: 2;" onchange="applyDashboardFilters()"></select>
-                                <input type="number" id="dashboardStartYearInput" class="custom-input-year" placeholder="AAAA" min="1900" max="2100" value="" style="flex: 1;" onchange="applyDashboardFilters()">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="dashboardEndMonthSelect">Mês Final:</label>
-                            <div style="display:flex; gap: 5px;">
-                                <select id="dashboardEndMonthSelect" class="custom-select" style="flex: 2;" onchange="applyDashboardFilters()"></select>
-                                <input type="number" id="dashboardEndYearInput" class="custom-input-year" placeholder="AAAA" min="1900" max="2100" value="" style="flex: 1;" onchange="applyDashboardFilters()">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="filter-columns">
-                        <!-- FILTRO DE EMPRESA (lista de checkboxes customizada) -->
-                        <div class="filter-group">
-                            <label>Empresa:</label>
-                            <div class="multi-select-list" id="dashboardFilterCompanyList">
-                                <!-- Opções serão preenchidas via JS -->
-                            </div>
-                        </div>
-
-                        <!-- FILTRO DE PROCESSO (lista de checkboxes customizada) -->
-                        <div class="filter-group">
-                            <label>Processo:</label>
-                            <div class="multi-select-list" id="dashboardFilterProcessList">
-                                <!-- Opções serão preenchidas via JS -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Botões de Ação para o Painel de Filtros -->
-                    <div class="button-group">
-                        <button class="btn btn-primary" onclick="applyDashboardFilters()">
-                            <i class="fas fa-filter"></i>
-                            Aplicar Filtros
-                        </button>
-                        <button class="btn btn-secondary" onclick="clearDashboardFilters()">
-                            <i class="fas fa-trash-alt"></i>
-                            Limpar Filtros
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Cards de Métricas do Dashboard -->
-                <div class="dashboard-metrics-grid">
-                    <div class="metric-card card-total-cost">
-                        <i class="metric-icon fas fa-dollar-sign"></i>
-                        <h4>Custo Total</h4>
-                        <p id="dashboardTotalCost">R\$ 0,00</p>
-                    </div>
-                    <div class="metric-card card-order-cost">
-                        <i class="metric-icon fas fa-file-invoice-dollar"></i>
-                        <h4>Custo Ordens Pagamento</h4>
-                        <p id="dashboardOrderCost">R\$ 0,00</p>
-                    </div>
-                    <div class="metric-card card-boleto-cost">
-                        <i class="metric-icon fas fa-barcode"></i>
-                        <h4>Custo Boletos</h4>
-                        <p id="dashboardBoletoCost">R\$ 0,00</p>
-                    </div>
-                    <div class="metric-card card-salary-cost">
-                        <i class="metric-icon fas fa-wallet"></i>
-                        <h4>Custo Salários/Auxílios</h4>
-                        <p id="dashboardSalaryCost">R\$ 0,00</p>
-                    </div>
-                    <div class="metric-card card-transactions">
-                        <i class="metric-icon fas fa-list-ol"></i>
-                        <h4>Nº de Lançamentos</h4>
-                        <p id="dashboardTotalTransactions">0</p>
-                    </div>
-                    <div class="metric-card card-income">
-                        <i class="metric-icon fas fa-hand-holding-usd"></i>
-                        <h4>Total Entradas</h4>
-                        <p id="dashboardIncome">R\$ 0,00</p>
-                    </div>
-                    <div class="metric-card card-difference">
-                        <i class="metric-icon fas fa-balance-scale"></i>
-                        <h4>Diferença (Entradas - Saídas)</h4>
-                        <p id="dashboardDifference" class=""></p>
-                    </div>
-                    <!-- CARD PARA VALOR TOTAL DE ORDENS PENDENTES (Dados de Entrada) -->
-                    <div class="metric-card card-pending-orders">
-                        <i class="metric-icon fas fa-hourglass-half"></i>
-                        <h4>Valor Ordens Pendentes</h4>
-                        <p id="dashboardPendingOrdersValue">R\$ 0,00</p>
-                    </div>
-                    <!-- NOVO CARD PARA QUANTIDADE DE ORDENS PENDENTES (Dados de Entrada) -->
-                    <div class="metric-card card-pending-orders-count">
-                        <i class="metric-icon fas fa-list-ul"></i>
-                        <h4>Qtd. Ordens Pendentes</h4>
-                        <p id="dashboardPendingOrdersCount">0</p>
-                    </div>
-                </div>
-
-                <h2 style="margin-top: 30px;">Relatório Detalhado de Pagamentos por Processo</h2>
-                <div class="filters">
-                    <div class="filters-row">
-                        <div class="form-group">
-                            <label for="reportFilterProcess">Processo:</label>
-                            <input type="text" id="reportFilterProcess" placeholder="Filtrar por processo" oninput="debouncedApplyReportFilters()">
-                        </div>
-                        <div class="form-group">
-                            <label for="reportFilterMonth">Mês/Ano:</label>
-                            <input type="month" id="reportFilterMonth" onchange="applyReportFilters()">
-                        </div>
-                        <div class="form-group">
-                            <label for="reportFilterYear">Ano:</label>
-                            <select id="reportFilterYear" onchange="applyReportFilters()">
-                                <option value="">Todos os anos</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>&nbsp;</label>
-                            <button class="btn" onclick="clearReportFilters()">Limpar Filtros</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Botões de exportação para a tabela de relatório -->
-                <div class="export-buttons">
-                    <button class="btn btn-success" onclick="exportReportToExcel()"><i class="fas fa-file-excel"></i> Exportar Excel</button>
-                    <button class="btn btn-info" onclick="exportReportToPDF()"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
-                </div>
-
-                <!-- Tabela de Relatório Existente -->
-                <div style="overflow-x: auto;">
-                    <table class="orders-table">
-                        <thead>
-                            <tr>
-                                <th>Processo</th>
-                                <th>Mês/Ano</th>
-                                <th>Quantidade de Pagamentos</th>
-                                <th>Valor Total Pago</th>
-                                <th>Valor Médio</th>
-                            </tr>
-                        </thead>
-                        <tbody id="reportsTableBody">
-                        </tbody>
-                    </table>
+        <!-- SELECTORES DE MÊS INICIAL/FINAL (Expandido em linha) -->
+        <div id="dashboardMonthYearFilters" class="form-group-row" style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 15px; margin-bottom: 25px; width: 100%;">
+            <div class="form-group" style="flex: 1; min-width: 200px;">
+                <label for="dashboardStartMonthSelect" style="font-weight: 500; color: #495057;">Mês Inicial:</label>
+                <div style="display: flex; gap: 8px;">
+                    <select id="dashboardStartMonthSelect" class="custom-select" style="flex: 2; padding: 8px; border: 1px solid #ced4da; border-radius: 6px; background: white;" onchange="applyDashboardFilters()"></select>
+                    <input type="number" id="dashboardStartYearInput" class="custom-input-year" placeholder="AAAA" min="1900" max="2100" value="" style="flex: 1; padding: 8px; border: 1px solid #ced4da; border-radius: 6px; background: white;" onchange="applyDashboardFilters()">
                 </div>
             </div>
+            <div class="form-group" style="flex: 1; min-width: 200px;">
+                <label for="dashboardEndMonthSelect" style="font-weight: 500; color: #495057;">Mês Final:</label>
+                <div style="display: flex; gap: 8px;">
+                    <select id="dashboardEndMonthSelect" class="custom-select" style="flex: 2; padding: 8px; border: 1px solid #ced4da; border-radius: 6px; background: white;" onchange="applyDashboardFilters()"></select>
+                    <input type="number" id="dashboardEndYearInput" class="custom-input-year" placeholder="AAAA" min="1900" max="2100" value="" style="flex: 1; padding: 8px; border: 1px solid #ced4da; border-radius: 6px; background: white;" onchange="applyDashboardFilters()">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Colunas de Filtros Expandida (2 colunas responsivas) -->
+        <div class="filter-columns" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; width: 100%;">
+            <!-- FILTRO DE EMPRESA (lista de checkboxes customizada) -->
+            <div class="filter-group" style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                <label style="font-weight: 500; color: #495057; margin-bottom: 10px; display: block;">Empresa:</label>
+                <div class="multi-select-list" id="dashboardFilterCompanyList" style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px; padding: 10px;">
+                    <!-- Opções serão preenchidas via JS -->
+                </div>
+            </div>
+
+            <!-- FILTRO DE PROCESSO (lista de checkboxes customizada) -->
+            <div class="filter-group" style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                <label style="font-weight: 500; color: #495057; margin-bottom: 10px; display: block;">Processo:</label>
+                <div class="multi-select-list" id="dashboardFilterProcessList" style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px; padding: 10px;">
+                    <!-- Opções serão preenchidas via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Botões de Ação para o Painel de Filtros (Expandido) -->
+        <div class="button-group" style="display: flex; gap: 10px; justify-content: flex-end; padding-top: 15px; border-top: 1px solid #dee2e6;">
+            <button class="btn btn-primary" onclick="applyDashboardFilters()" style="padding: 10px 20px; border-radius: 6px; font-weight: 500; transition: background 0.3s;">
+                <i class="fas fa-filter" style="margin-right: 5px;"></i>
+                Aplicar Filtros
+            </button>
+            <button class="btn btn-secondary" onclick="clearDashboardFilters()" style="padding: 10px 20px; border-radius: 6px; font-weight: 500; transition: background 0.3s;">
+                <i class="fas fa-trash-alt" style="margin-right: 5px;"></i>
+                Limpar Filtros
+            </button>
+        </div>
+    </div>
+
+    <!-- Cards de Métricas do Dashboard (Grid Responsivo Melhorado) -->
+    <div class="dashboard-metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+        <div class="metric-card card-total-cost" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); transition: transform 0.3s;">
+            <i class="metric-icon fas fa-dollar-sign" style="font-size: 2em; margin-bottom: 10px;"></i>
+            <h4 style="margin: 0 0 10px 0; font-size: 1.1em;">Custo Total</h4>
+            <p id="dashboardTotalCost" style="font-size: 1.8em; font-weight: bold; margin: 0;">R$ 0,00</p>
+        </div>
+
+        <div class="metric-card card-order-cost" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3); transition: transform 0.3s;">
+            <i class="metric-icon fas fa-file-invoice-dollar" style="font-size: 2em; margin-bottom: 10px;"></i>
+            <h4 style="margin: 0 0 10px 0; font-size: 1.1em;">Custo Ordens Pagamento</h4>
+            <p id="dashboardOrderCost" style="font-size: 1.8em; font-weight: bold; margin: 0;">R$ 0,00</p>
+        </div>
+
+        <div class="metric-card card-boleto-cost" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3); transition: transform 0.3s;">
+            <i class="metric-icon fas fa-barcode" style="font-size: 2em; margin-bottom: 10px;"></i>
+            <h4 style="margin: 0 0 10px 0; font-size: 1.1em;">Custo Boletos</h4>
+            <p id="dashboardBoletoCost" style="font-size: 1.8em; font-weight: bold; margin: 0;">R$ 0,00</p>
+        </div>
+
+        <div class="metric-card card-salary-cost" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(67, 233, 123, 0.3); transition: transform 0.3s;">
+            <i class="metric-icon fas fa-wallet" style="font-size: 2em; margin-bottom: 10px;"></i>
+            <h4 style="margin: 0 0 10px 0; font-size: 1.1em;">Custo Salários/Auxílios</h4>
+            <p id="dashboardSalaryCost" style="font-size: 1.8em; font-weight: bold; margin: 0;">R$ 0,00</p>
+        </div>
+
+        <div class="metric-card card-transactions" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(250, 112, 154, 0.3); transition: transform 0.3s;">
+            <i class="metric-icon fas fa-list-ol" style="font-size: 2em; margin-bottom: 10px;"></i>
+            <h4 style="margin: 0 0 10px 0; font-size: 1.1em;">Nº de Lançamentos</h4>
+            <p id="dashboardTotalTransactions" style="font-size: 1.8em; font-weight: bold; margin: 0;">0</p>
+        </div>
+
+        <div class="metric-card card-income" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(168, 237, 234, 0.3); transition: transform 0.3s;">
+            <i class="metric-icon fas fa-hand-holding-usd" style="font-size: 2em; margin-bottom: 10px; color: #28a745;"></i>
+            <h4 style="margin: 0 0 10px 0; font-size: 1.1em;">Total Entradas</h4>
+            <p id="dashboardIncome" style="font-size: 1.8em; font-weight: bold; margin: 0; color: #28a745;">R$ 0,00</p>
+        </div>
+
+        <div class="metric-card card-difference" style="background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%); color: #333; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(210, 153, 194, 0.3); transition: transform 0.3s;">
+            <i class="metric-icon fas fa-balance-scale" style="font-size: 2em; margin-bottom: 10px;"></i>
+            <h4 style="margin: 0 0 10px 0; font-size: 1.1em;">Diferença (Entradas - Saídas)</h4>
+            <p id="dashboardDifference" class="" style="font-size: 1.8em; font-weight: bold; margin: 0;"></p>
+        </div>
+
+        <!-- CARD PARA VALOR TOTAL DE ORDENS PENDENTES (Dados de Entrada) -->
+        <div class="metric-card card-pending-orders" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(255, 236, 210, 0.3); transition: transform 0.3s;">
+            <i class="metric-icon fas fa-hourglass-half" style="font-size: 2em; margin-bottom: 10px; color: #ffc107;"></i>
+            <h4 style="margin: 0 0 10px 0; font-size: 1.1em;">Valor Ordens Pendentes</h4>
+            <p id="dashboardPendingOrdersValue" style="font-size: 1.8em; font-weight: bold; margin: 0;">R$ 0,00</p>
+        </div>
+
+        <!-- NOVO CARD PARA QUANTIDADE DE ORDENS PENDENTES (Dados de Entrada) -->
+        <div class="metric-card card-pending-orders-count" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(255, 154, 158, 0.3); transition: transform 0.3s;">
+            <i class="metric-icon fas fa-list-ul" style="font-size: 2em; margin-bottom: 10px;"></i>
+            <h4 style="margin: 0 0 10px 0; font-size: 1.1em;">Qtd. Ordens Pendentes</h4>
+            <p id="dashboardPendingOrdersCount" style="font-size: 1.8em; font-weight: bold; margin: 0;">0</p>
+        </div>
+    </div>
+</div>
             
             <!-- Aba: Salários/Auxílios -->
             <div id="salariesTab" class="tab-content">
@@ -1969,16 +1922,8 @@
     </div>
     <!-- END: Modal genérico para visualização de detalhes de qualquer item pago -->
     
-<!-- Scripts de Integração WhatsApp -->
-<!-- whatsapp-config.js pode vir primeiro, pois define WHATSAPP_CONFIG -->
-<script src="whatsapp-config.js" defer></script>
-
 <!-- Script Principal do Sistema (AGORA CARREGADO MAIS CEDO) -->
 <script src="script.js" defer></script> 
-
-<!-- Outros scripts que dependem de funções definidas em script.js -->
-<script src="whatsapp-integration.js" defer></script>
-<script src="wscheduler.js" defer></script>
 
 </body>
 </html>
